@@ -1,0 +1,10 @@
+<resources>
+    <string name="app_name">Pisano Feedback</string>
+    <string name="get_feedback">Get Feedback</string>
+    <string name="this_field_is_required">This field is required.</string>
+    <string name="email_address_is_not_valid">E-mail address is not valid.</string>
+    <string name="email_address">Email Address</string>
+    <string name="phone_number">Phone Number</string>
+    <string name="name">Name Surname</string>
+    <string name="external_id">External Id</string>
+</resources>
