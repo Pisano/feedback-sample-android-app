@@ -2,6 +2,8 @@
 
 It is a sample android application using the Feedback SDK.
 
+![Main Image](https://media.giphy.com/media/uJUaQAwMhgGIk944X5/giphy.gif)
+
 ## How to use Feedback SDK
 
 You can check the latest releases [here](https://search.maven.org/artifact/co.pisano.feedback/feedback).
