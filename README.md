@@ -225,7 +225,7 @@ PisanoSDK.INSTANCE.clearAction();
 | SEND_FEEDBACK  | Send Feedback   |
 | DISPLAY_ONCE  | Survey won't be shown due to the customer saw it before.  |
 | PREVENT_MULTIPLE_FEEDBACK  | Survey won't be shown due to customer already submitted a feedback in a given time period.  |
-| CHANNEL_QUOTA_EXCEEDED  | Survey won't be shown due to quota exceeded.  | version: 1.2.17 |
+| CHANNEL_QUOTA_EXCEEDED  | Survey won't be shown due to quota exceeded.  version: 1.2.17 |
 | OUTSIDE | Others |
 
 
