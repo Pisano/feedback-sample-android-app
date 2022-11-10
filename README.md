@@ -6,7 +6,7 @@ It is a sample android application using the Feedback SDK.
 
 ## How to use Feedback SDK
 
-You can check the latest releases [here](https://central.sonatype.dev/artifact/co.pisano.feedback/feedback/1.2.17).
+You can check the latest releases [here](https://central.sonatype.dev/artifact/co.pisano.feedback/feedback/1.3.0).
 
 ### Supported Android Versions
 Pisano for Android supports Android API 16 and above.
@@ -27,7 +27,7 @@ Add the Pisano SDK dependency to the app/build.gradle file.
 
 ```yaml
 dependencies {
-    implementation 'co.pisano.feedback:feedback:1.2.17'
+    implementation 'co.pisano.feedback:feedback:1.3.0'
 }
 ```
 ### Permissions
@@ -71,6 +71,7 @@ val manager = PisanoSDKManager.Builder(context)
                 PisanoActions.SEND_FEEDBACK -> {}
                 PisanoActions.DISPLAY_ONCE -> {}
                 PisanoActions.PREVENT_MULTIPLE_FEEDBACK -> {}
+                PisanoActions.CHANNEL_QUOTA_EXCEEDED -> {}
                 else -> {}
             }
 
@@ -112,6 +113,8 @@ PisanoSDKManager pisanoSDKManager = new PisanoSDKManager.Builder(this)
                         break;
                     case PREVENT_MULTIPLE_FEEDBACK:
                         break;
+                    case CHANNEL_QUOTA_EXCEEDED:
+                        break;    
                     default:
                         throw new IllegalStateException("Unexpected pisano action value: " + pisanoActions);
                 }
@@ -132,13 +135,24 @@ PisanoSDK.INSTANCE.init(pisanoSDKManager);
 | setCloseStatusCallback | No | ActionListener | Please check the table below for the details of this Pisano Actions Enum Class  |
 
 ### Show Method 
-#### Kotlin
+#### Kotlin | version: 1.3.0
 
 ```yaml
 import co.pisano.feedback.data.model.PisanoCustomer
+import co.pisano.feedback.data.model.Title
+import co.pisano.feedback.data.helper.ViewMode
 import co.pisano.feedback.managers.PisanoSDK
 
 PisanoSDK.show(
+    viewMode = ViewMode.Default
+    title = Title(
+    text = "Your Survey Title"
+    textSize = null
+    textColor = null
+    textStyle = null
+    backgroundColor = null
+    fontStyle = null
+    )
     flowId = "",
     language = "EN",
     pisanoCustomer = PisanoCustomer(
@@ -160,6 +174,8 @@ PisanoSDK.show(
 ```yaml
 import java.util.HashMap;
 import co.pisano.feedback.data.model.PisanoCustomer;
+import co.pisano.feedback.data.model.Title;
+import co.pisano.feedback.data.helper.ViewMode;
 import co.pisano.feedback.managers.PisanoSDK;
 
 HashMap<String, String> payload = new HashMap<>();
@@ -174,7 +190,20 @@ PisanoCustomer pisanoCustomer = new PisanoCustomer("name",
         "phoneNumber",
         customerAttributes);
 
-PisanoSDK.INSTANCE.show(null, 
+ViewMode viewMode = ViewMode.DEFAULT;
+   
+Title title = new Title(
+    "text"
+    "textSize"
+    "textColor" 
+    "textStyle"
+    "backgroundColor"
+    "fontStyle" )
+
+PisanoSDK.INSTANCE.show(
+        viewMode,
+        title
+        null, 
         "en",
         payload,
         pisanoCustomer);
@@ -198,15 +227,37 @@ import co.pisano.feedback.managers.PisanoSDK;
 PisanoSDK.INSTANCE.clearAction();
 
 ```
+## Pisano Show Method
 
 | Parameter  Name | Type  | Description  |
 | ------- | --- | --- |
+| viewMode | ViewMode | Survey opens full screen in default mode or bottom sheet mode. |
+| title | Title | Survey can be given a title in AppBar and customized with the specified parameters.  |
 | flowId | String | The ID of related flow. Can be obtained from Pisano Dashboard. Can be sent as empty string "" for default flow |
 | language | String | Language code |
 | payload | HashMap<String, String>  | Question and related answer in an array (mostly uses for pre-loaded responses to take transactional data(s))  |
 | pisanoCustomer | PisanoCustomer | Please check the table below for the details of this PisanoCustomer |
 
-## Pisano Customer Class
+
+## Pisano ViewMode Enum Class 
+
+| Mode  Name | Description  |
+| ------- | --- | 
+| DEFAULT | Survey opens full screen in default mode.  |
+| BOTTOM_SHEET | Survey opens  in bottom sheet mode. | 
+
+## Pisano Title Data Class
+
+| Property  Name | Type  | Description  |
+| ------- | --- | --- |
+| text | String | Set the title text in AppBar ; if title is Null or Blank then AppBar is not even visible in Survey.  |
+| textSize | Float | Set the text size of title ; if null it is set to 22F by default.   |
+| textStyle | Int | Set the text style of title ; if null it is set to Typeface.NORMAL by default.  |
+| textColor | Int | Set the text color of title ; if null it is set to Color.Black by default  |
+| backgroundColor | Int  | Set the background color of AppBar ; if null it is set to Color.White by default  |
+| fontStyle | String  | Place your .tff font file in the /assets directory under the Android project and set the fontStyle as exactly same file name. (e.g => fontStyle = "jelly_bomb.ttf" )  |
+
+## Pisano Customer Data Class
 
 | Property  Name | Type  | Description  |
 | ------- | --- | --- |
