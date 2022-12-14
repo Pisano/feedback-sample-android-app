@@ -44,7 +44,17 @@ If you would like your customers to upload a file together with their feedback, 
 ```yaml
 <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
 <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+<uses-permission android:name="android.permission.CAMERA" />
 ```
+
+Starting with version 1.3.2, a file permission popup will be displayed. If the user is denied permission, a toast message will be shown. If you want to customize the denied access message, you need add the following three keys to your strings.xml file.
+(Note: You can use the 'pisano_file_permission' key to handle all cases)
+
+| Optional | Key  | Description |
+| -------- | ------- | --- |
+| No | pisano_file_permission | for both sources (camera / storage) |
+| Yes | pisano_camera_permission | for only camera |
+| Yes | pisano_storage_permission | for only storage |
 
 ## Usage SDK 
 ### Initialize Method
