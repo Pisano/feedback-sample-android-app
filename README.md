@@ -46,6 +46,35 @@ If you would like your customers to upload a file together with their feedback, 
 <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
 <uses-permission android:name="android.permission.CAMERA" />
 ```
+and you should also add a file provider.
+
+AndroidManifest.xml
+```yaml
+<application>
+...
+    <provider
+        android:name="androidx.core.content.FileProvider"
+        android:authorities="${applicationId}.provider"
+        android:exported="false"
+        android:grantUriPermissions="true">
+        <meta-data
+            android:name="android.support.FILE_PROVIDER_PATHS"
+            android:resource="@xml/fileprovider" />
+    </provider>
+...
+</application>
+```
+
+FileProvider.xml
+```yaml
+<?xml version="1.0" encoding="utf-8"?>
+<paths>
+    <cache-path
+        name="mediaimages"
+        path="./">
+    </cache-path>
+</paths>
+```
 
 Starting with version 1.3.2, a file permission popup will be displayed. If the user is denied permission, a toast message will be shown. If you want to customize the denied access message, you need add the following three keys to your strings.xml file.
 (Note: You can use the 'pisano_file_permission' key to handle all cases)
