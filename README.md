@@ -2,14 +2,14 @@
 
 It is a sample android application using the Feedback SDK.
 
-![Main Image](https://media.giphy.com/media/uJUaQAwMhgGIk944X5/giphy.gif)
+<img src="https://github.com/Pisano/feedback-sample-android-app/blob/main/flow.gif" width="400" />
 
 ## How to use Feedback SDK
 
-You can check the latest releases [here](https://central.sonatype.dev/artifact/co.pisano.feedback/feedback/1.3.0).
+You can check the latest releases [here](https://central.sonatype.dev/artifact/co.pisano.feedback/feedback/2.0.2).
 
 ### Supported Android Versions
-Pisano for Android supports Android API 16 and above.
+Pisano for Android supports Android API 21 and above.
 
 ### Installation
 The repository typically goes into the build.gradle file in the root of your project:
@@ -42,9 +42,9 @@ In order to use Pisano Android SDK, you should include the following permissions
 If you would like your customers to upload a file together with their feedback, you should also include the following permissions. 
 
 ```yaml
-<uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
-<uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
-<uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE" />
 ```
 and you should also add a file provider.
 
@@ -174,7 +174,7 @@ PisanoSDK.INSTANCE.init(pisanoSDKManager);
 | setCloseStatusCallback | No | ActionListener | Please check the table below for the details of this Pisano Actions Enum Class  |
 
 ### Show Method 
-#### Kotlin | version: 1.3.0
+#### Kotlin | version: 2.0.2
 
 ```yaml
 import co.pisano.feedback.data.model.PisanoCustomer
@@ -182,27 +182,12 @@ import co.pisano.feedback.data.model.Title
 import co.pisano.feedback.data.helper.ViewMode
 import co.pisano.feedback.managers.PisanoSDK
 
-PisanoSDK.show(
-    viewMode = ViewMode.Default
-    title = Title(
-    text = "Your Survey Title"
-    textSize = null
-    textColor = null
-    textStyle = null
-    backgroundColor = null
-    fontStyle = null
-    )
-    flowId = "",
-    language = "EN",
-    pisanoCustomer = PisanoCustomer(
-        name = null,
-        email = null,
-        phoneNumber = null,
-        externalId = null,
-        customAttributes = HashMap<String, Any>().apply {
-           // your map items
-            this["your_key"] = "your value"
-        }
+PisanoSDK.newShow(
+    customerModel = CustomerModel(
+        id = "id",
+        name = "name",
+        email = "email",
+        externalId = "externalId"
     )
 )
 
@@ -223,29 +208,13 @@ payload.put("your_key", "your value");
 HashMap<String, Object> customerAttributes = new HashMap<>();
 customerAttributes.put("your_key", "your value");
 
-PisanoCustomer pisanoCustomer = new PisanoCustomer("name", 
-        "external_id",
+CustomerModel pisanoCustomer = new CustomerModel("id", 
+        "name",
         "email",
-        "phoneNumber",
+        "externalId",
         customerAttributes);
 
-ViewMode viewMode = ViewMode.DEFAULT;
-   
-Title title = new Title(
-    "text"
-    "textSize"
-    "textColor" 
-    "textStyle"
-    "backgroundColor"
-    "fontStyle" )
-
-PisanoSDK.INSTANCE.show(
-        viewMode,
-        title
-        null, 
-        "en",
-        payload,
-        pisanoCustomer);
+PisanoSDK.INSTANCE.newShow(pisanoCustomer);
 ```
 
 ### Clear Method | version: 1.2.17
