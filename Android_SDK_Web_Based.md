@@ -25,7 +25,7 @@ Add the Pisano SDK dependency to the app/build.gradle file.
 
 ```yaml
 dependencies {
-    implementation 'co.pisano.feedback:feedback:1.3.4'
+    implementation 'co.pisano.feedback:feedback:1.3.6'
 }
 ```
 ### Permissions
@@ -109,6 +109,7 @@ val manager = PisanoSDKManager.Builder(context)
                 PisanoActions.DISPLAY_ONCE -> {}
                 PisanoActions.PREVENT_MULTIPLE_FEEDBACK -> {}
                 PisanoActions.CHANNEL_QUOTA_EXCEEDED -> {}
+                PisanoActions.INIT_FAILED ->{}
                 else -> {}
             }
 
@@ -283,6 +284,7 @@ PisanoSDK.INSTANCE.clearAction();
 | DISPLAY_ONCE  | Survey won't be shown due to the customer saw it before.  |
 | PREVENT_MULTIPLE_FEEDBACK  | Survey won't be shown due to customer already submitted a feedback in a given time period.  |
 | CHANNEL_QUOTA_EXCEEDED  | Survey won't be shown due to quota exceeded.  version: 1.2.17 |
+| INIT_FAILED  | SDK Init is failed.  version: 1.3.6 |
 | OUTSIDE | Others |
 
 
