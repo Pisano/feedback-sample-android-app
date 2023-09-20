@@ -25,7 +25,7 @@ Add the Pisano SDK dependency to the app/build.gradle file.
 
 ```yaml
 dependencies {
-    implementation 'co.pisano.feedback:feedback:2.0.4'
+    implementation 'co.pisano.feedback:feedback:2.0.5'
 }
 ```
 ### Permissions
