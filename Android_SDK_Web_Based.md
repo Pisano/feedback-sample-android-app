@@ -4,7 +4,7 @@ It is a sample android application using the Feedback SDK.
 
 ## How to use Feedback SDK
 
-You can check the latest releases [here](https://central.sonatype.dev/artifact/co.pisano.feedback/feedback/1.3.4).
+You can check the latest releases [here](https://central.sonatype.dev/artifact/co.pisano.feedback/feedback/1.3.8).
 
 ### Supported Android Versions
 Pisano for Android supports Android API 21 and above.
@@ -25,7 +25,7 @@ Add the Pisano SDK dependency to the app/build.gradle file.
 
 ```yaml
 dependencies {
-    implementation 'co.pisano.feedback:feedback:1.3.7'
+    implementation 'co.pisano.feedback:feedback:1.3.8'
 }
 ```
 ### Permissions
@@ -110,6 +110,7 @@ val manager = PisanoSDKManager.Builder(context)
                 PisanoActions.PREVENT_MULTIPLE_FEEDBACK -> {}
                 PisanoActions.CHANNEL_QUOTA_EXCEEDED -> {}
                 PisanoActions.INIT_FAILED ->{}
+                PisanoActions.INIT_SUCCESS ->{}
                 else -> {}
             }
 
@@ -285,6 +286,7 @@ PisanoSDK.INSTANCE.clearAction();
 | PREVENT_MULTIPLE_FEEDBACK  | Survey won't be shown due to customer already submitted a feedback in a given time period.  |
 | CHANNEL_QUOTA_EXCEEDED  | Survey won't be shown due to quota exceeded.  version: 1.2.17 |
 | INIT_FAILED  | SDK Init is failed.  version: 1.3.6 |
+| INIT_SUCCESS  | SDK Init is succesful.  version: 1.3.8 |
 | OUTSIDE | Others |
 
 
