@@ -4,7 +4,7 @@ It is a sample android application using the Feedback SDK.
 
 ## How to use Feedback SDK
 
-You can check the latest releases [here](https://central.sonatype.dev/artifact/co.pisano.feedback/feedback/1.3.8).
+You can check the latest releases [here](https://central.sonatype.com/artifact/co.pisano.feedback/feedback/1.3.17).
 
 ### Supported Android Versions
 Pisano for Android supports Android API 21 and above.
