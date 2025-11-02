@@ -179,8 +179,7 @@ fun HomeContent() {
 
                     if (isValidState.value) {
                         PisanoSDK.show(
-                            flowId = FeedbackUtil.flowId,
-                            language = Locale.getDefault().language,
+                            flowId = FeedbackUtil.flowId ?: "",
                             pisanoCustomer = PisanoCustomer(
                                 name = nameState.value,
                                 email = emailState.value,
