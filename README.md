@@ -9,6 +9,7 @@ Pisano Feedback Android SDK is an SDK that allows you to easily integrate user f
 - [Installation](#installation)
 - [Quick Start](#quick-start)
 - [API Reference](#api-reference)
+  - [PisanoActions](#pisanoactions)
 - [Usage Examples](#usage-examples)
 - [Configuration](#configuration)
 - [Frequently Asked Questions](#frequently-asked-questions)
@@ -20,7 +21,6 @@ Pisano Feedback Android SDK is an SDK that allows you to easily integrate user f
 - ✅ **Native Android Integration**: Fully native Android SDK
 - ✅ **Kotlin & Java Compatibility**: Can be used in both Kotlin and Java projects
 - ✅ **Flexible View Modes**: Full-screen and bottom sheet view options
-- ✅ **Event Tracking**: Ability to track user activities
 - ✅ **Health Check**: Ability to check SDK status
 - ✅ **User Information Support**: Ability to send user data
 - ✅ **Multi-Language Support**: Ability to display surveys in different languages
@@ -88,7 +88,6 @@ class MyApplication : Application() {
             .setAccessKey("YOUR_ACCESS_KEY")
             .setApiUrl("https://api.pisano.co")
             .setFeedbackUrl("https://web.pisano.co/web_feedback")
-            .setEventUrl("https://track.pisano.co/track")
             .setCloseStatusCallback(object : ActionListener {
                 override fun action(action: PisanoActions) {
                     when (action) {
@@ -133,7 +132,6 @@ public class MyApplication extends Application {
             .setAccessKey("YOUR_ACCESS_KEY")
             .setApiUrl("https://api.pisano.co")
             .setFeedbackUrl("https://web.pisano.co/web_feedback")
-            .setEventUrl("https://track.pisano.co/track")
             .setCloseStatusCallback(new ActionListener() {
                 @Override
                 public void action(PisanoActions action) {
@@ -217,7 +215,6 @@ Initializes the SDK. This method must be called either at application startup (u
   - `accessKey: String` - Your API access key
   - `apiUrl: String` - API endpoint URL
   - `feedbackUrl: String` - Feedback widget URL
-  - `eventUrl: String?` - Event tracking URL (optional)
   - `closeStatusActionListener: ActionListener?` - Initialization result callback (optional)
 
 **Example:**
@@ -228,7 +225,6 @@ val manager = PisanoSDKManager.Builder(context)
     .setAccessKey("key-456")
     .setApiUrl("https://api.pisano.co")
     .setFeedbackUrl("https://web.pisano.co/web_feedback")
-    .setEventUrl("https://track.pisano.co/track")
     .setCloseStatusCallback(object : ActionListener {
         override fun action(action: PisanoActions) {
             when (action) {
@@ -293,38 +289,6 @@ PisanoSDK.show(
 )
 ```
 
-### `PisanoSDK.track()`
-
-Tracks user activities and automatically triggers the feedback widget if needed.
-
-**Parameters:**
-- `event: String` - Event name (required)
-- `payload: HashMap<String, String>?` - Event data (optional)
-- `pisanoCustomer: PisanoCustomer?` - User information (optional)
-- `languageCode: String?` - Language code (optional)
-
-**Example:**
-
-```kotlin
-val payload = hashMapOf(
-    "product_id" to "PROD-123",
-    "price" to "99.99",
-    "currency" to "USD"
-)
-
-val customer = PisanoCustomer(
-    externalId = "USER-456",
-    email = "user@example.com"
-)
-
-PisanoSDK.track(
-    event = "purchase_completed",
-    payload = payload,
-    pisanoCustomer = customer,
-    languageCode = "en"
-)
-```
-
 ### `PisanoSDK.healthCheck()`
 
 Checks the SDK status. It is recommended to use this before displaying the widget.
@@ -351,6 +315,23 @@ PisanoSDK.healthCheck(
 }
 ```
 
+### `PisanoActions`
+
+The `PisanoActions` enum is returned by various SDK methods to indicate the result of an operation.
+
+**PisanoActions Values:**
+
+- `INIT_SUCCESS`: SDK initialized successfully
+- `INIT_FAILED`: SDK initialization failed
+- `OPENED`: Survey/widget opened
+- `CLOSED`: User clicked the close button
+- `SEND_FEEDBACK`: Feedback was sent
+- `OUTSIDE`: Closed by clicking outside
+- `DISPLAY_ONCE`: Already shown before
+- `PREVENT_MULTIPLE_FEEDBACK`: Multiple feedback prevented
+- `CHANNEL_PASSIVE`: Survey is in passive state
+- `CHANNEL_QUOTA_EXCEEDED`: Quota exceeded
+
 ## 💡 Usage Examples
 
 ### Kotlin Usage
@@ -374,13 +355,6 @@ class MainActivity : AppCompatActivity() {
                 viewMode = ViewMode.BOTTOM_SHEET,
                 language = "en",
                 pisanoCustomer = PisanoCustomer(externalId = "USER-123")
-            )
-        }
-        
-        findViewById<Button>(R.id.trackEventButton).setOnClickListener {
-            PisanoSDK.track(
-                event = "button_clicked",
-                payload = hashMapOf("button_name" to "feedback_button")
             )
         }
     }
@@ -437,58 +411,8 @@ public class MainActivity extends AppCompatActivity {
                 customer
             );
         });
-        
-        Button trackEventButton = findViewById(R.id.trackEventButton);
-        trackEventButton.setOnClickListener(v -> {
-            HashMap<String, String> payload = new HashMap<>();
-            payload.put("button_name", "feedback_button");
-            
-            PisanoSDK.INSTANCE.track(
-                "button_clicked",
-                payload,
-                null,
-                null
-            );
-        });
     }
 }
-```
-
-### Listening to Events with ActionListener
-
-The SDK also notifies about widget close status through the `ActionListener` callback.
-
-```kotlin
-val manager = PisanoSDKManager.Builder(context)
-    .setApplicationId("YOUR_APP_ID")
-    .setAccessKey("YOUR_ACCESS_KEY")
-    .setApiUrl("https://api.pisano.co")
-    .setFeedbackUrl("https://web.pisano.co/web_feedback")
-    .setCloseStatusCallback(object : ActionListener {
-        override fun action(action: PisanoActions) {
-            when (action) {
-                PisanoActions.CLOSED -> {
-                    Log.d("Pisano", "Widget closed")
-                }
-                PisanoActions.SEND_FEEDBACK -> {
-                    Log.d("Pisano", "Feedback sent")
-                }
-                PisanoActions.OUTSIDE -> {
-                    Log.d("Pisano", "Closed by clicking outside")
-                }
-                PisanoActions.DISPLAY_ONCE -> {
-                    Log.d("Pisano", "Already shown before")
-                }
-                PisanoActions.CHANNEL_PASSIVE -> {
-                    Log.d("Pisano", "Survey is in passive state")
-                }
-                else -> {}
-            }
-        }
-    })
-    .build()
-
-PisanoSDK.init(manager)
 ```
 
 ## ⚙️ Configuration
