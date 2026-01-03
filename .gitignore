@@ -1,6 +1,13 @@
 *.iml
 .gradle
 /local.properties
+local.properties
+.idea/
+.vscode/
+.cursor/
+**/*.jks
+**/*.keystore
+google-services.json
 /.idea/caches
 /.idea/libraries
 /.idea/modules.xml
@@ -12,4 +19,6 @@
 /captures
 .externalNativeBuild
 .cxx
-local.properties
+
+# Pisano sample local test config (do not commit)
+pisano-config.plist
