@@ -1,7 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
 
-    <style name="Theme.FeedbackApp" parent="android:Theme.Material.Light.NoActionBar">
+    <style name="Theme.FeedbackApp" parent="Theme.MaterialComponents.Light.NoActionBar">
+        <item name="colorPrimary">@color/colorPrimary</item>
+        <item name="colorPrimaryVariant">@color/colorPrimary</item>
+        <item name="colorOnPrimary">@android:color/white</item>
         <item name="android:statusBarColor">@color/colorPrimary</item>
+        <!-- Prevent Android 10+ "force dark" from making the UI look like dark mode -->
+        <item name="android:forceDarkAllowed" tools:targetApi="q">false</item>
     </style>
 </resources>

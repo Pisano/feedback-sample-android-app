@@ -1,4 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="colorPrimary">#0D7BFF</color>
+    <color name="splashColorOne">#E5F1FF</color>
+    <color name="splashColorTwo">#F1E9FF</color>
+    <color name="splashColorThree">#FFE5F4</color>
+    <color name="splashColorFour">#FFEEEE</color>
+    <color name="splashColorFive">#E5FFFF</color>
+    <color name="splashColorSix">#FFFEE5</color>
 </resources>

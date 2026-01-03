@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>PISANO_APP_ID</key>
+    <string></string>
+    <key>PISANO_ACCESS_KEY</key>
+    <string></string>
+    <key>PISANO_API_URL</key>
+    <string>https://api.pisano.co</string>
+    <key>PISANO_FEEDBACK_URL</key>
+    <string>https://web.pisano.co/web_feedback</string>
+    <key>PISANO_EVENT_URL</key>
+    <string></string>
+</dict>
+</plist>
+
+
