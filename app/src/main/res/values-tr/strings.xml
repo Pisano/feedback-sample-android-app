@@ -2,10 +2,35 @@
 <resources>
     <string name="app_name">Pisano Geribildirim</string>
     <string name="get_feedback">Geri Bildirim Ver</string>
-    <string name="this_field_is_required">Bu alan zorunludur.</string>
     <string name="email_address_is_not_valid">E-Posta Adresi geçerli değil.</string>
     <string name="email_address">E-Posta Adresi</string>
     <string name="phone_number">Telefon Numarası</string>
     <string name="name">Ad Soyad</string>
     <string name="external_id">External Id</string>
+
+    <string name="getting_started">Başlayalım</string>
+    <string name="back">Geri</string>
+    <string name="clear">Temizle</string>
+    <string name="config_missing">Konfigürasyon eksik. Lütfen PISANO_* değerlerini ayarlayın (README).</string>
+    <string name="action_status">Aksiyon Durumu: %1$s</string>
+    <string name="custom_title">Özel Başlık</string>
+    <string name="custom_title_color">Özel Başlık Rengi</string>
+    <string name="font">Yazı Tipi</string>
+    <string name="font_large">Büyük</string>
+    <string name="font_title">Başlık</string>
+    <string name="font_body">Gövde</string>
+    <string name="font_bold">Kalın</string>
+    <string name="font_regular">Normal</string>
+    <string name="view_mode">Görünüm Modu</string>
+    <string name="view_mode_default">Varsayılan</string>
+    <string name="view_mode_bottom_sheet">Alt Sayfa</string>
+
+    <string name="welcome_feedback">Geri Bildirim</string>
+    <string name="welcome_forms_flows">formlar \\ akışlar</string>
+    <string name="welcome_for_business">iş için</string>
+    <string name="welcome_subtitle">Pisano ile oluşturulan akışlarla etkileşime geçin</string>
+
+    <string name="healthcheck_running">HealthCheck: çalışıyor&#8230;</string>
+    <string name="healthcheck_failed">HealthCheck: başarısız (ağ/url kontrol edin)</string>
+    <string name="healthcheck_ok">HealthCheck: başarılı</string>
 </resources>
