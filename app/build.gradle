@@ -6,12 +6,13 @@ plugins {
 import java.util.Properties
 
 android {
-    compileSdk 31
+    namespace 'co.pisano.android.feedback'
+    compileSdk 34
 
     defaultConfig {
         applicationId "co.pisano.android.feedback"
         minSdk 21
-        targetSdk 31
+        targetSdk 34
         versionCode 1
         versionName "1.0"
         multiDexEnabled true
@@ -63,6 +64,7 @@ android {
 
         buildConfigField "String", "PISANO_APP_ID", quote(readSecret("PISANO_APP_ID"))
         buildConfigField "String", "PISANO_ACCESS_KEY", quote(readSecret("PISANO_ACCESS_KEY"))
+        buildConfigField "String", "PISANO_CODE", quote(readSecret("PISANO_CODE"))
         buildConfigField "String", "PISANO_API_URL", quote(readSecret("PISANO_API_URL"))
         buildConfigField "String", "PISANO_FEEDBACK_URL", quote(readSecret("PISANO_FEEDBACK_URL"))
         buildConfigField "String", "PISANO_EVENT_URL", quote(readSecret("PISANO_EVENT_URL"))
@@ -75,11 +77,11 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
     }
     kotlinOptions {
-        jvmTarget = '1.8'
+        jvmTarget = '17'
     }
     buildFeatures {
         buildConfig true
@@ -108,7 +110,7 @@ dependencies {
     implementation 'androidx.activity:activity-ktx:1.3.1'
 
     // feedback sdk (latest stable)
-    implementation 'co.pisano:feedback:1.3.27'
+    implementation 'co.pisano:feedback:1.3.28'
 
     // test
     testImplementation 'junit:junit:4.13.2'

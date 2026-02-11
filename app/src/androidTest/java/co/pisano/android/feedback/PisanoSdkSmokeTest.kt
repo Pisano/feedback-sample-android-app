@@ -19,6 +19,7 @@ class PisanoSdkSmokeTest {
         // Skip on CI/local devices where secrets are not configured.
         assumeTrue(BuildConfig.PISANO_APP_ID.isNotBlank())
         assumeTrue(BuildConfig.PISANO_ACCESS_KEY.isNotBlank())
+        assumeTrue(BuildConfig.PISANO_CODE.isNotBlank())
         assumeTrue(BuildConfig.PISANO_API_URL.isNotBlank())
         assumeTrue(BuildConfig.PISANO_FEEDBACK_URL.isNotBlank())
 
@@ -29,10 +30,10 @@ class PisanoSdkSmokeTest {
         var isHealthy: Boolean? = null
 
         PisanoSDK.healthCheck(
-            flowId = null,
             language = null,
-            payload = null,
             pisanoCustomer = PisanoCustomer(externalId = "smoke-test"),
+            payload = null,
+            code = null,
         ) { ok ->
             isHealthy = ok
             latch.countDown()

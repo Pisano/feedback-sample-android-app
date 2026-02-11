@@ -6,6 +6,8 @@
     <string></string>
     <key>PISANO_ACCESS_KEY</key>
     <string></string>
+    <key>PISANO_CODE</key>
+    <string></string>
     <key>PISANO_API_URL</key>
     <string>https://api.pisano.co</string>
     <key>PISANO_FEEDBACK_URL</key>

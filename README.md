@@ -18,7 +18,6 @@ This repository contains a **public sample app**:
 - [Local credentials (do not commit)](#local-credentials-do-not-commit)
 - [Quick Start](#quick-start)
 - [API Reference](#api-reference)
-  - [PisanoActions](#pisanoactions)
 - [Usage Examples](#usage-examples)
 - [Configuration](#configuration)
 - [Build / Run](#build--run)
@@ -33,10 +32,13 @@ This repository contains a **public sample app**:
 - ✅ **Native sample app UI**: Sample screens implemented with XML Views + Kotlin
 - ✅ **Kotlin & Java SDK API**: The SDK can be used from Kotlin and Java
 - ✅ **Flexible View Modes**: Full-screen and bottom sheet view options
+- ✅ **Event Tracking**: Ability to track user activities
 - ✅ **Health Check**: Ability to check SDK status
 - ✅ **User Information Support**: Ability to send user data
 - ✅ **Multi-Language Support**: Ability to display surveys in different languages
 - ✅ **Custom Title**: Customizable title support
+- ✅ **Code-based configuration**: Single source in `init()` (applicationId, accessKey, code, URLs); all API calls use this state
+- ✅ **Display rate throttling**: Backend can send `display_rate` (0–100); SDK shows or skips deterministically and reports `DISPLAY_RATE_LIMITED` when skipped
 
 ## 📱 Requirements
 
@@ -212,24 +214,39 @@ import co.pisano.feedback.managers.PisanoSDK
 import co.pisano.feedback.managers.PisanoSDKManager
 
 class MyApplication : Application() {
-  override fun onCreate() {
-    super.onCreate()
-
-    val manager = PisanoSDKManager.Builder(this)
-      .setApplicationId("YOUR_APP_ID")
-      .setAccessKey("YOUR_ACCESS_KEY")
-      .setApiUrl("https://api.pisano.co")
-      .setFeedbackUrl("https://web.pisano.co/web_feedback")
-      .setEventUrl("YOUR_EVENT_URL") // optional
-      .setCloseStatusCallback(object : ActionListener {
-        override fun action(action: PisanoActions) {
-          Log.d("Pisano", "action=$action")
-        }
-      })
-      .build()
-
-    PisanoSDK.init(manager)
-  }
+    override fun onCreate() {
+        super.onCreate()
+        
+        val manager = PisanoSDKManager.Builder(this)
+            .setApplicationId("YOUR_APP_ID")
+            .setAccessKey("YOUR_ACCESS_KEY")
+            .setCode("YOUR_CODE")
+            .setApiUrl("https://api.pisano.co")
+            .setFeedbackUrl("https://web.pisano.co/web_feedback")
+            .setEventUrl("https://track.pisano.co/track")
+            .setCloseStatusCallback(object : ActionListener {
+                override fun action(action: PisanoActions) {
+                    when (action) {
+                        PisanoActions.INIT_SUCCESS -> {
+                            Log.d("Pisano", "SDK initialized successfully")
+                        }
+                        PisanoActions.INIT_FAILED -> {
+                            Log.e("Pisano", "SDK initialization failed")
+                        }
+                        PisanoActions.SEND_FEEDBACK -> {
+                            Log.d("Pisano", "Feedback sent")
+                        }
+                        PisanoActions.CLOSED -> {
+                            Log.d("Pisano", "Survey closed")
+                        }
+                        else -> {}
+                    }
+                }
+            })
+            .build()
+        
+        PisanoSDK.init(manager)
+    }
 }
 ```
 
@@ -252,9 +269,10 @@ public class MyApplication extends Application {
         PisanoSDKManager manager = new PisanoSDKManager.Builder(this)
             .setApplicationId("YOUR_APP_ID")
             .setAccessKey("YOUR_ACCESS_KEY")
+            .setCode("YOUR_CODE")
             .setApiUrl("https://api.pisano.co")
             .setFeedbackUrl("https://web.pisano.co/web_feedback")
-            .setEventUrl("YOUR_EVENT_URL") // optional
+            .setEventUrl("https://track.pisano.co/track")
             .setCloseStatusCallback(new ActionListener() {
                 @Override
                 public void action(PisanoActions action) {
@@ -283,35 +301,267 @@ Advanced usage:
 ```kotlin
 import android.graphics.Color
 import android.graphics.Typeface
+
+val customer = PisanoCustomer(
+    name = "John Doe",
+    email = "john@example.com",
+    phoneNumber = "+1234567890",
+    externalId = "CRM-12345",
+    customAttributes = hashMapOf(
+        "language" to "en",
+        "city" to "New York"
+    )
+)
+
+val title = Title(
+    text = "We Value Your Feedback",
+    textSize = 20f,
+    textColor = Color.BLACK,
+    textStyle = Typeface.BOLD,
+    backgroundColor = Color.WHITE
+)
+
+val payload = hashMapOf(
+    "source" to "app",
+    "screen" to "home"
+)
+
+PisanoSDK.show(
+    viewMode = ViewMode.BOTTOM_SHEET,
+    title = title,
+    language = "en",
+    payload = payload,
+    pisanoCustomer = customer
+)
+```
+
+## 📚 API Reference
+
+### `PisanoSDK.init()`
+
+Initializes the SDK. This method must be called either at application startup (usually in the `Application` class) or before calling the `show()` method.
+
+**Parameters:**
+- `pisanoSDKManager: PisanoSDKManager` - SDK configuration manager (required)
+  - `applicationId: String` - Your application's unique ID
+  - `accessKey: String` - Your API access key
+  - `code: String` - Your widget code (required)
+  - `apiUrl: String` - API endpoint URL
+  - `feedbackUrl: String` - Feedback widget URL
+  - `eventUrl: String?` - Event tracking URL (optional; required if you use `PisanoSDK.track`)
+  - `isDebug: Boolean` - When `true`, SDK logs (e.g. display_rate skip, fetch success/fail) are printed to Logcat with tag `PISANO_SDK` (optional, default `false`)
+  - `closeStatusActionListener: ActionListener?` - Initialization result callback (optional)
+
+**Example:**
+
+```kotlin
+val manager = PisanoSDKManager.Builder(context)
+    .setApplicationId("app-123")
+    .setAccessKey("key-456")
+    .setCode("code-789")
+    .setApiUrl("https://api.pisano.co")
+    .setFeedbackUrl("https://web.pisano.co/web_feedback")
+    .setEventUrl("https://track.pisano.co/track")
+    .setDebug(true)
+    .setCloseStatusCallback(object : ActionListener {
+        override fun action(action: PisanoActions) {
+            when (action) {
+                PisanoActions.INIT_SUCCESS -> {
+                    println("SDK initialized successfully")
+                }
+                PisanoActions.INIT_FAILED -> {
+                    println("SDK initialization failed")
+                }
+                else -> {}
+            }
+        }
+    })
+    .build()
+
+PisanoSDK.init(manager)
+```
+
+### `PisanoSDK.show()`
+
+Displays the feedback widget.
+
+**Parameters:**
+- `viewMode: ViewMode` - View mode (default: `ViewMode.DEFAULT`)
+  - `ViewMode.DEFAULT`: Full-screen overlay
+  - `ViewMode.BOTTOM_SHEET`: Bottom sheet mode
+- `title: Title?` - Custom title (optional)
+- `language: String?` - Language code (e.g., "en", "tr") (optional)
+- `payload: HashMap<String, String>?` - Extra data (optional)
+- `pisanoCustomer: PisanoCustomer?` - User information (optional)
+- `code: String?` - **Optional.** Widget code for this call. If **not** provided, the SDK uses the **code from `init()` (boot)**. If provided, this code is used for this request (e.g. to show a different widget than the one configured at init).
+
+**User Information Fields:**
+- `name: String?` - User name
+- `email: String?` - Email address
+- `phoneNumber: String?` - Phone number
+- `externalId: String?` - External system ID (CRM, etc.)
+- `customAttributes: HashMap<String, Any>?` - Custom attributes
+
+**Example:**
+
+```kotlin
+val customer = PisanoCustomer(
+    name = "John Doe",
+    email = "john@example.com",
+    externalId = "USER-123"
+)
+
+val title = Title(
+    text = "We Value Your Feedback",
+    textSize = 20f,
+    textColor = Color.BLACK
+)
+
+PisanoSDK.show(
+    viewMode = ViewMode.BOTTOM_SHEET,
+    title = title,
+    language = "en",
+    payload = null,
+    pisanoCustomer = customer
+)
+```
+
+**Using init (boot) code (default):**  
+If you do not pass `code`, the SDK uses the code set in `PisanoSDK.init(...)`.
+
+```kotlin
+// Uses the code from init (boot)
+PisanoSDK.show(viewMode = ViewMode.BOTTOM_SHEET, language = "en")
+```
+
+**Overriding code for a single call:**  
+You can pass a different `code` for this call only; the SDK will use it for this request (e.g. to show another widget).
+
+```kotlin
+// Uses "PSN-other-widget" for this call only; init code is unchanged
+PisanoSDK.show(
+    viewMode = ViewMode.BOTTOM_SHEET,
+    language = "tr",
+    code = "PSN-other-widget"
+)
+```
+
+### `PisanoSDK.track()`
+
+Tracks user activities and automatically triggers the feedback widget if needed.
+
+**Parameters:**
+- `event: String` - Event name (required)
+- `payload: HashMap<String, String>?` - Event data (optional)
+- `pisanoCustomer: PisanoCustomer?` - User information (optional)
+- `languageCode: String?` - Language code (optional)
+
+**Example:**
+
+```kotlin
+val payload = hashMapOf(
+    "product_id" to "PROD-123",
+    "price" to "99.99",
+    "currency" to "USD"
+)
+
+val customer = PisanoCustomer(
+    externalId = "USER-456",
+    email = "user@example.com"
+)
+
+PisanoSDK.track(
+    event = "purchase_completed",
+    payload = payload,
+    pisanoCustomer = customer,
+    languageCode = "en"
+)
+```
+
+### `PisanoSDK.clearAction()`
+
+Clears the SDK's local data (Shared Preferences). This is useful when logging out a user to ensure fresh state for the next user.
+
+**Example:**
+
+```kotlin
+PisanoSDK.clearAction()
+```
+
+### `PisanoSDK.healthCheck()`
+
+Checks the SDK status. It is recommended to use this before displaying the widget.
+
+**Parameters:**
+- `language: String?` - Language code (optional)
+- `pisanoCustomer: PisanoCustomer?` - User information (optional)
+- `payload: HashMap<String, String>?` - Extra data (optional)
+- `code: String?` - **Optional.** Widget code for this check. If **not** provided, the SDK uses the **code from `init()` (boot)**. If provided, this code is used for this request.
+- `isHealthCheckSuccessful: (Boolean) -> Unit` - Health check result (true: successful, false: failed)
+
+**Example (uses init code):**
+
+```kotlin
+PisanoSDK.healthCheck(
+    pisanoCustomer = PisanoCustomer(externalId = "USER-789")
+) { isHealthy ->
+    if (isHealthy) {
+        PisanoSDK.show()
+    } else {
+        Log.e("Pisano", "SDK health check failed")
+    }
+}
+```
+
+**With code override (check a different widget):**
+
+```kotlin
+PisanoSDK.healthCheck(
+    pisanoCustomer = PisanoCustomer(externalId = "USER-789"),
+    code = "PSN-other-widget"
+) { isHealthy ->
+    if (isHealthy) {
+        PisanoSDK.show(code = "PSN-other-widget")
+    }
+}
+```
+
+## 💡 Usage Examples
+
+### Kotlin Usage
+
+#### Usage in Activity
+
+```kotlin
+import androidx.appcompat.app.AppCompatActivity
+import co.pisano.feedback.managers.PisanoSDK
 import co.pisano.feedback.data.helper.ViewMode
 import co.pisano.feedback.data.model.PisanoCustomer
 import co.pisano.feedback.data.model.Title
 import co.pisano.feedback.managers.PisanoSDK
 
-val customer = PisanoCustomer(
-  name = "John Doe",
-  email = "john@example.com",
-  phoneNumber = "+1234567890",
-  externalId = "CRM-12345",
-  customAttributes = hashMapOf("source" to "app")
-)
-
-val title = Title(
-  text = "We Value Your Feedback",
-  textSize = 20f,
-  textColor = Color.BLACK,
-  textStyle = Typeface.BOLD,
-  backgroundColor = Color.WHITE
-)
-
-PisanoSDK.show(
-  viewMode = ViewMode.BOTTOM_SHEET,
-  title = title,
-  flowId = "specific-flow-id",
-  language = "en",
-  payload = hashMapOf("screen" to "home"),
-  pisanoCustomer = customer
-)
+class MainActivity : AppCompatActivity() {
+    
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_main)
+        
+        findViewById<Button>(R.id.showFeedbackButton).setOnClickListener {
+            PisanoSDK.show(
+                viewMode = ViewMode.BOTTOM_SHEET,
+                language = "en",
+                pisanoCustomer = PisanoCustomer(externalId = "USER-123")
+            )
+        }
+        
+        findViewById<Button>(R.id.trackEventButton).setOnClickListener {
+            PisanoSDK.track(
+                event = "button_clicked",
+                payload = hashMapOf("button_name" to "feedback_button")
+            )
+        }
+    }
+}
 ```
 
 #### Java
@@ -321,99 +571,87 @@ import co.pisano.feedback.data.helper.ViewMode;
 import co.pisano.feedback.data.model.PisanoCustomer;
 import co.pisano.feedback.managers.PisanoSDK;
 
-public class Example {
-    public void show() {
-        PisanoCustomer customer = new PisanoCustomer(
-            "John Doe",
-            "john@example.com",
-            null,
-            null,
-            "USER-123",
-            null
-        );
-
-        PisanoSDK.INSTANCE.show(
-            ViewMode.BOTTOM_SHEET,
-            null,
-            "flow-123",
-            "en",
-            null,
-            customer
-        );
+public class MainActivity extends AppCompatActivity {
+    
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+        
+        Button showFeedbackButton = findViewById(R.id.showFeedbackButton);
+        showFeedbackButton.setOnClickListener(v -> {
+            PisanoCustomer customer = new PisanoCustomer(
+                null,           // name
+                "USER-123",     // externalId
+                null,           // email
+                null,           // phoneNumber
+                null            // customAttributes
+            );
+            
+            PisanoSDK.INSTANCE.show(
+                ViewMode.BOTTOM_SHEET,
+                null,
+                null,
+                "en",
+                null,
+                customer
+            );
+        });
+        
+        Button trackEventButton = findViewById(R.id.trackEventButton);
+        trackEventButton.setOnClickListener(v -> {
+            HashMap<String, String> payload = new HashMap<>();
+            payload.put("button_name", "feedback_button");
+            
+            PisanoSDK.INSTANCE.track(
+                "button_clicked",
+                payload,
+                null,
+                null
+            );
+        });
     }
 }
 ```
 
-### 3) Health Check
+### Listening to Events with ActionListener
+
+The SDK also notifies about widget close status through the `ActionListener` callback.
 
 ```kotlin
-import android.util.Log
-import co.pisano.feedback.data.model.PisanoCustomer
-import co.pisano.feedback.managers.PisanoSDK
+val manager = PisanoSDKManager.Builder(context)
+    .setApplicationId("YOUR_APP_ID")
+    .setAccessKey("YOUR_ACCESS_KEY")
+    .setApiUrl("https://api.pisano.co")
+    .setFeedbackUrl("https://web.pisano.co/web_feedback")
+    .setCloseStatusCallback(object : ActionListener {
+        override fun action(action: PisanoActions) {
+            when (action) {
+                PisanoActions.CLOSED -> {
+                    Log.d("Pisano", "Widget closed")
+                }
+                PisanoActions.SEND_FEEDBACK -> {
+                    Log.d("Pisano", "Feedback sent")
+                }
+                PisanoActions.OUTSIDE -> {
+                    Log.d("Pisano", "Closed by clicking outside")
+                }
+                PisanoActions.DISPLAY_ONCE -> {
+                    Log.d("Pisano", "Already shown before")
+                }
+                PisanoActions.DISPLAY_RATE_LIMITED -> {
+                    Log.d("Pisano", "Skipped due to display_rate throttling")
+                }
+                PisanoActions.CHANNEL_PASSIVE -> {
+                    Log.d("Pisano", "Survey is in passive state")
+                }
+                else -> {}
+            }
+        }
+    })
+    .build()
 
-PisanoSDK.healthCheck(
-  flowId = "flow-123",
-  pisanoCustomer = PisanoCustomer(externalId = "USER-789")
-) { isHealthy ->
-  if (isHealthy) {
-    PisanoSDK.show()
-  } else {
-    Log.e("Pisano", "SDK health check failed")
-  }
-}
-```
-
-### Sample app flow (this repo)
-
-- Init once: `PisanoSampleApplication` → `PisanoSdkBootstrapper.ensureInitialized(...)`
-- Show: `MainActivity` (XML UI) button → `PisanoSDK.show(...)`
-- Deep link: `MainActivity` parses `flow_id` and forwards it to `show(...)`
-
-### `PisanoSDK.track()`
-
-Tracks a custom event.
-
-**Parameters:**
-- `event: String` (required)
-- `payload: HashMap<String, String>?` (optional)
-- `pisanoCustomer: PisanoCustomer?` (optional)
-- `language: String?` (optional)
-
-Kotlin:
-
-```kotlin
-import co.pisano.feedback.data.model.PisanoCustomer
-import co.pisano.feedback.managers.PisanoSDK
-
-PisanoSDK.track(
-  event = "button_click",
-  payload = hashMapOf("screen" to "home"),
-  pisanoCustomer = PisanoCustomer(externalId = "USER-123"),
-  language = "en"
-)
-```
-
-Java:
-
-```java
-import java.util.HashMap;
-import co.pisano.feedback.data.model.PisanoCustomer;
-import co.pisano.feedback.managers.PisanoSDK;
-
-HashMap<String, String> payload = new HashMap<>();
-payload.put("screen", "home");
-
-PisanoSDK.INSTANCE.track("button_click", payload, new PisanoCustomer(null, null, null, null, "USER-123", null), "en");
-```
-
-### `PisanoSDK.clearAction()`
-
-Clears the last action/state held by the SDK.
-
-```kotlin
-import co.pisano.feedback.managers.PisanoSDK
-
-PisanoSDK.clearAction()
+PisanoSDK.init(manager)
 ```
 
 ## ⚙️ Configuration
@@ -430,6 +668,18 @@ PisanoSDK.show(viewMode = ViewMode.DEFAULT)
 // Bottom sheet
 PisanoSDK.show(viewMode = ViewMode.BOTTOM_SHEET)
 ```
+
+### Display Rate (`display_rate`)
+
+The backend can return `display_rate` (0–100) in `/detail` and/or `/trigger`. The SDK uses this value to **deterministically** throttle `show()` attempts:
+
+- `100`: always show
+- `0`: never show
+- Example `50`: **show, skip, show, skip, ...** (1st call shows, 2nd skips, 3rd shows, ...)
+
+This decision is **code-based** (state is stored per widget `code`). If the `code` changes, throttling starts fresh for the new `code`. If `display_rate` changes for the same `code`, the internal counter is reset.
+
+If a `show()` attempt is skipped due to `display_rate`, the SDK will not open UI and will emit `PisanoActions.DISPLAY_RATE_LIMITED` via the callback.
 
 ### Custom Title
 
@@ -541,7 +791,16 @@ implementation 'com.squareup.okhttp3:okhttp:4.9.3'
 
 ### Java usage error
 
-When using Java, use `PisanoSDK.INSTANCE`:
+This feature ensures that the widget is shown to the user only once (or once per delay period). The backend sends `display_once` (boolean) and optionally `display_once_delay_period`. The SDK stores "shown" locally and, if a delay period is set, will not show again until that period has passed. **`display_once_delay_period` is in hours** (e.g. `24` = once per day). This matches iOS and fixes "once per day" behaviour on Android.
+
+### Why is `code` required in init?
+
+The SDK uses `code` (with `applicationId`, `accessKey`, `platform_id`, `bundle_id`) in every `/detail` and `/trigger` request. It is stored once at `PisanoSDK.init(...)` (boot) and reused for all subsequent calls. **On Android, `bundle_id` is the application package name** (`context.packageName`).  
+**In `show()` and `healthCheck()`:** you can optionally pass `code`. If you **do not** pass it, the **init (boot) code** is used. If you pass it, that code is used for that call only (e.g. to show or check another widget).
+
+### Why does `show()` sometimes not open the survey?
+
+The backend can return `display_rate` (0–100). The SDK then decides deterministically whether to show or skip (e.g. 50% → show, skip, show, skip…). When skipped, the UI does not open and the callback receives `PisanoActions.DISPLAY_RATE_LIMITED`. Other cases: `DISPLAY_ONCE`, `CHANNEL_PASSIVE`, or quota/trigger rules.
 
 ```java
 PisanoSDK.INSTANCE.show(...);
@@ -561,7 +820,9 @@ If you need custom rules:
 
 This sample includes an instrumented smoke test: `PisanoSdkSmokeTest`.
 
-It runs:
+1. Make sure `applicationId`, `accessKey`, `code`, `apiUrl`, and `feedbackUrl` are set in `PisanoSDKManager.Builder(...)` (required); set `eventUrl` if you use `track`
+2. Check that API URLs are correct and accessible
+3. Check that internet permissions are in the `AndroidManifest.xml` file
 
 - SDK init (boot once)
 - `PisanoSDK.healthCheck(...)`
@@ -574,3 +835,25 @@ Run on an emulator/device:
 ./gradlew :app:connectedAndroidTest
 ```
 
+### Widget won't display
+
+1. Make sure the `PisanoSDK.init()` method completed successfully (with valid `applicationId`, `accessKey`, `code`)
+2. Perform a health check to verify SDK status
+3. Check internet connection
+4. If the callback receives `DISPLAY_RATE_LIMITED`, the backend's `display_rate` caused this call to be skipped (deterministic throttling)
+
+### Java usage error
+
+When using Java, use `PisanoSDK.INSTANCE`:
+
+```java
+PisanoSDK.INSTANCE.show(...)
+```
+
+### Bottom sheet not working
+
+Bottom sheet feature depends on Material Design Components. If the bottom sheet is not working, you can use full-screen mode (`ViewMode.DEFAULT`).
+
+### MinifyEnabled error
+
+Check your ProGuard rules. The `consumer-rules.pro` file is automatically included, but you may need to add custom rules.

@@ -4,6 +4,7 @@
     <string name="getting_started">Getting Started</string>
     <string name="back">Back</string>
     <string name="clear">Clear</string>
+    <string name="health_check">Health Check</string>
     <string name="config_missing">Config missing. Please set PISANO_* values (see README).</string>
     <string name="action_status">Action Status: %1$s</string>
     <string name="email_address_is_not_valid">E-mail address is not valid.</string>
