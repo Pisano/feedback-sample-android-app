@@ -1,24 +1,36 @@
 # Feedback Android SDK
 
-Pisano Feedback Android SDK is an SDK that allows you to easily integrate user feedback collection into your Android applications. With this SDK, you can collect surveys and feedback from your users and improve the user experience.
+Pisano Feedback Android SDK is an SDK that allows you to easily integrate user feedback collection into your Android applications.
+
+> This repository is a **sample app repo**. The **SDK source code is not in this repo**.
+
+This repository contains a **public sample app**:
+
+- The sample app UI (screens, inputs, buttons) is **native** (XML Views + Kotlin).
+- The survey/question UI is **rendered by the SDK** after calling `PisanoSDK.show(...)` (the app does not build survey screens itself).
 
 ## 📋 Table of Contents
 
 - [Features](#features)
 - [Requirements](#requirements)
 - [Installation](#installation)
+- [Run the sample app](#run-the-sample-app)
+- [Local credentials (do not commit)](#local-credentials-do-not-commit)
 - [Quick Start](#quick-start)
 - [API Reference](#api-reference)
 - [Usage Examples](#usage-examples)
 - [Configuration](#configuration)
+- [Build / Run](#build--run)
+- [Tests](#tests)
 - [Frequently Asked Questions](#frequently-asked-questions)
 - [Troubleshooting](#troubleshooting)
+- [Smoke tests](#smoke-tests)
 
 ## ✨ Features
 
-- ✅ **Web-Based Feedback Forms**: Modern and flexible web-based form support
-- ✅ **Native Android Integration**: Fully native Android SDK
-- ✅ **Kotlin & Java Compatibility**: Can be used in both Kotlin and Java projects
+- ✅ **SDK-hosted Survey UI**: Surveys/questions are rendered by the SDK (typically via embedded web content)
+- ✅ **Native sample app UI**: Sample screens implemented with XML Views + Kotlin
+- ✅ **Kotlin & Java SDK API**: The SDK can be used from Kotlin and Java
 - ✅ **Flexible View Modes**: Full-screen and bottom sheet view options
 - ✅ **Event Tracking**: Ability to track user activities
 - ✅ **Health Check**: Ability to check SDK status
@@ -30,16 +42,18 @@ Pisano Feedback Android SDK is an SDK that allows you to easily integrate user f
 
 ## 📱 Requirements
 
-- Android API Level 16 (Android 4.1) or higher
-- Gradle 4.1.3 or higher
-- Kotlin 1.4.32 or higher
-- AndroidX libraries
+From this sample project:
+
+- **minSdk**: 21 (`app/build.gradle`)
+- **targetSdk/compileSdk**: 31 (`app/build.gradle`)
+- **Android Gradle Plugin**: 7.2.1 (root `build.gradle`)
+- **Kotlin**: 1.6.10 (root `build.gradle`)
 
 ## 📦 Installation
 
 ### Installation with Gradle
 
-#### 1. Project Level `build.gradle`
+#### 1) Project repositories
 
 ```gradle
 allprojects {
@@ -50,36 +64,154 @@ allprojects {
 }
 ```
 
-#### 2. Module Level `build.gradle`
+#### 2) SDK dependency (latest stable used by this sample)
 
 ```gradle
 dependencies {
-    implementation 'co.pisano:feedback:[VERSION]'
+    implementation 'co.pisano:feedback:1.3.27'
 }
 ```
 
-#### 3. Internet Permissions
+#### 3) Permissions
 
-Add the following permissions to your `AndroidManifest.xml` file:
+Add the following permissions to your `AndroidManifest.xml`:
 
 ```xml
 <uses-permission android:name="android.permission.INTERNET" />
 <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 ```
 
+## ▶️ Run the sample app
+
+### Open in Android Studio (recommended)
+
+- Open the repo root in Android Studio
+- Select the `app` configuration
+- Run on an emulator or a device
+
+### Build from CLI (optional)
+
+Debug APK:
+
+```bash
+./gradlew :app:assembleDebug
+```
+
+## 🔑 Local credentials (do not commit)
+
+This repository **does not include any API keys**.
+
+To run locally, you must provide your own `PISANO_*` credentials. This sample reads secrets at build-time and injects them into `BuildConfig`.
+
+**Where values come from (priority order)**:
+
+- Gradle `-P` properties
+- Environment variables
+- `pisano-config.plist` (optional, local-only; gitignored)
+- `local.properties` (gitignored)
+
+**Recommended local setup**:
+
+1. Copy `local.properties.example` → `local.properties`
+2. Fill the keys (**do not commit** `local.properties`)
+
+**Optional (for quick local testing)**:
+
+- Create `pisano-config.plist` in the repo root (gitignored) and fill the same keys.
+
+If credentials are missing, the sample app will **not initialize the SDK** (it skips init) and shows a user-facing warning, so opening the widget may not work until you add your own credentials.
+
 ## 🚀 Quick Start
 
-### 1. Initializing the SDK
+### 1) Configure credentials
 
-You must initialize the SDK before using it. The SDK initialization should be done either at application startup (usually in the `Application` class) or before calling the `show()` method.
+See: [Local credentials (do not commit)](#local-credentials-do-not-commit)
 
-#### Kotlin
+**Required keys**:
+
+- `PISANO_APP_ID`
+- `PISANO_ACCESS_KEY`
+- `PISANO_API_URL`
+- `PISANO_FEEDBACK_URL`
+- `PISANO_EVENT_URL` (optional)
+
+### 2) Initialize the SDK (boot once)
+
+In this sample, SDK init is done **once** at app startup:
+
+- `PisanoSampleApplication` → `PisanoSdkBootstrapper.ensureInitialized(...)`
+
+If config is missing, init is skipped and the sample shows a user-facing warning (and logs a safe message without secrets).
+
+### 3) Show the survey
+
+In this sample, `MainActivity` calls `PisanoSDK.show(...)` when you press **Get Feedback**.
+
+The sample also supports a deep link to pass `flowId`:
+
+- `pisano://show?flow_id=...`
+
+## 📚 API Reference
+
+### `PisanoSDK.init()`
+
+Initializes the SDK. Call this once at app startup (recommended) or before calling `show()`.
+
+**Parameters (via `PisanoSDKManager.Builder`)**:
+- `setApplicationId(String)` (required)
+- `setAccessKey(String)` (required)
+- `setApiUrl(String)` (required)
+- `setFeedbackUrl(String)` (required)
+- `setEventUrl(String)` (optional)
+- `setCloseStatusCallback(ActionListener)` (optional)
+
+### `PisanoSDK.show()`
+
+Shows the feedback/survey UI provided by the SDK.
+
+**Parameters:**
+- `viewMode: ViewMode` (default: `ViewMode.DEFAULT`)
+- `title: Title?` (optional)
+- `flowId: String?` (optional)
+- `language: String?` (optional)
+- `payload: HashMap<String, String>?` (optional)
+- `pisanoCustomer: PisanoCustomer?` (optional)
+
+### `PisanoSDK.healthCheck()`
+
+Checks SDK status. This sample includes an instrumented smoke test that calls `healthCheck` when config is present.
+
+**Parameters:**
+- `flowId: String?` (optional)
+- `language: String?` (optional)
+- `payload: HashMap<String, String>?` (optional)
+- `pisanoCustomer: PisanoCustomer?` (optional)
+- `isHealthCheckSuccessful: (Boolean) -> Unit`
+
+### `PisanoActions`
+
+The `PisanoActions` enum is returned by SDK callbacks to indicate the result of an operation.
+
+Common values:
+- `INIT_SUCCESS`, `INIT_FAILED`
+- `OPENED`, `CLOSED`, `OUTSIDE`
+- `SEND_FEEDBACK`
+- `DISPLAY_ONCE`, `PREVENT_MULTIPLE_FEEDBACK`
+- `CHANNEL_QUOTA_EXCEEDED`
+
+## 💡 Usage Examples
+
+### 1) Initializing the SDK
+
+You can initialize at app startup (recommended):
 
 ```kotlin
-import co.pisano.feedback.managers.PisanoSDK
-import co.pisano.feedback.managers.PisanoSDKManager
+import android.app.Application
+import android.util.Log
 import co.pisano.feedback.data.helper.ActionListener
 import co.pisano.feedback.data.helper.PisanoActions
+import co.pisano.feedback.managers.PisanoSDK
+import co.pisano.feedback.managers.PisanoSDKManager
 
 class MyApplication : Application() {
     override fun onCreate() {
@@ -121,16 +253,19 @@ class MyApplication : Application() {
 #### Java
 
 ```java
-import co.pisano.feedback.managers.PisanoSDK;
-import co.pisano.feedback.managers.PisanoSDKManager;
+import android.app.Application;
+import android.util.Log;
+
 import co.pisano.feedback.data.helper.ActionListener;
 import co.pisano.feedback.data.helper.PisanoActions;
+import co.pisano.feedback.managers.PisanoSDK;
+import co.pisano.feedback.managers.PisanoSDKManager;
 
 public class MyApplication extends Application {
     @Override
     public void onCreate() {
         super.onCreate();
-        
+
         PisanoSDKManager manager = new PisanoSDKManager.Builder(this)
             .setApplicationId("YOUR_APP_ID")
             .setAccessKey("YOUR_ACCESS_KEY")
@@ -141,37 +276,29 @@ public class MyApplication extends Application {
             .setCloseStatusCallback(new ActionListener() {
                 @Override
                 public void action(PisanoActions action) {
-                    switch (action) {
-                        case INIT_SUCCESS:
-                            Log.d("Pisano", "SDK initialized successfully");
-                            break;
-                        case INIT_FAILED:
-                            Log.e("Pisano", "SDK initialization failed");
-                            break;
-                    }
+                    Log.d("Pisano", "action=" + action);
                 }
             })
             .build();
-        
+
         PisanoSDK.INSTANCE.init(manager);
     }
 }
 ```
 
-### 2. Showing the Feedback Widget
+### 2) Showing the Feedback Widget
 
-#### Basic Usage
+Basic usage:
 
 ```kotlin
+import co.pisano.feedback.managers.PisanoSDK
+
 PisanoSDK.show()
 ```
 
-#### Advanced Usage
+Advanced usage:
 
 ```kotlin
-import co.pisano.feedback.data.helper.ViewMode
-import co.pisano.feedback.data.model.Title
-import co.pisano.feedback.data.model.PisanoCustomer
 import android.graphics.Color
 import android.graphics.Typeface
 
@@ -410,6 +537,8 @@ import androidx.appcompat.app.AppCompatActivity
 import co.pisano.feedback.managers.PisanoSDK
 import co.pisano.feedback.data.helper.ViewMode
 import co.pisano.feedback.data.model.PisanoCustomer
+import co.pisano.feedback.data.model.Title
+import co.pisano.feedback.managers.PisanoSDK
 
 class MainActivity : AppCompatActivity() {
     
@@ -435,31 +564,12 @@ class MainActivity : AppCompatActivity() {
 }
 ```
 
-#### Usage in Fragment
-
-```kotlin
-class HomeFragment : Fragment() {
-    
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
-        
-        view.findViewById<Button>(R.id.feedbackButton).setOnClickListener {
-            PisanoSDK.show(
-                viewMode = ViewMode.DEFAULT,
-                language = "tr"
-            )
-        }
-    }
-}
-```
-
-### Java Usage
+#### Java
 
 ```java
-import co.pisano.feedback.managers.PisanoSDK;
 import co.pisano.feedback.data.helper.ViewMode;
 import co.pisano.feedback.data.model.PisanoCustomer;
-import java.util.HashMap;
+import co.pisano.feedback.managers.PisanoSDK;
 
 public class MainActivity extends AppCompatActivity {
     
@@ -548,9 +658,10 @@ PisanoSDK.init(manager)
 
 ### ViewMode
 
-You can select the view mode:
-
 ```kotlin
+import co.pisano.feedback.data.helper.ViewMode
+import co.pisano.feedback.managers.PisanoSDK
+
 // Full-screen overlay (default)
 PisanoSDK.show(viewMode = ViewMode.DEFAULT)
 
@@ -572,18 +683,18 @@ If a `show()` attempt is skipped due to `display_rate`, the SDK will not open UI
 
 ### Custom Title
 
-You can customize the widget title:
-
 ```kotlin
 import android.graphics.Color
 import android.graphics.Typeface
+import co.pisano.feedback.data.model.Title
+import co.pisano.feedback.managers.PisanoSDK
 
 val title = Title(
-    text = "WE VALUE YOUR FEEDBACK",
-    textSize = 18f,
-    textColor = Color.BLUE,
-    textStyle = Typeface.BOLD,
-    backgroundColor = Color.WHITE
+  text = "WE VALUE YOUR FEEDBACK",
+  textSize = 18f,
+  textColor = Color.BLUE,
+  textStyle = Typeface.BOLD,
+  backgroundColor = Color.WHITE
 )
 
 PisanoSDK.show(title = title)
@@ -591,52 +702,94 @@ PisanoSDK.show(title = title)
 
 ### User Information
 
-You can provide a personalized experience by sending user information:
-
 ```kotlin
+import co.pisano.feedback.data.model.PisanoCustomer
+import co.pisano.feedback.managers.PisanoSDK
+
 val customer = PisanoCustomer(
-    name = "John Doe",
-    email = "john@example.com",
-    phoneNumber = "+1234567890",
-    externalId = "CRM-12345",
-    customAttributes = hashMapOf(
-        "language" to "en",
-        "city" to "New York",
-        "gender" to "male",
-        "birthday" to "1990-01-01"
-    )
+  name = "John Doe",
+  email = "john@example.com",
+  phoneNumber = "+1234567890",
+  externalId = "CRM-12345",
+  customAttributes = hashMapOf(
+    "language" to "en",
+    "city" to "New York"
+  )
 )
 
 PisanoSDK.show(pisanoCustomer = customer)
 ```
 
-**Valid user keys:**
-- `name`: User name
-- `email`: Email address
-- `phoneNumber`: Phone number
-- `externalId`: External system ID
-- `customAttributes`: Custom attributes (HashMap)
+**Valid user keys (customer attributes):**
+- `customAttributes`: `HashMap<String, Any>` (your custom keys and values)
+
+## Build / Run
+
+```bash
+./gradlew :app:assembleDebug
+```
+
+## Tests
+
+Unit tests:
+
+```bash
+./gradlew test
+```
+
+Instrumented tests (requires emulator/device):
+
+```bash
+./gradlew connectedAndroidTest
+```
+
+`PisanoSdkSmokeTest` auto-skips if `PISANO_*` config is missing (so CI doesn’t fail).
+
+### Manual smoke checklist
+
+- Launch app (SDK init logs)
+- Tap **Get Feedback** → survey opens
+- Fill → submit
+- Close → verify callback/log status
 
 ## ❓ Frequently Asked Questions
 
-### When should I initialize the SDK?
+### Does this sample build the survey/question UI?
 
-You must initialize the SDK either at application startup (in the `Application` class) or before calling the `show()` method.
+No. The sample app UI is native, but the survey/question UI is rendered by the SDK after `PisanoSDK.show(...)`.
 
-### Should I use health check?
+### Where is SDK initialization done in this repo?
 
-Health check allows you to check the SDK status before displaying the widget. It is recommended to use it before showing the widget on important screens.
+In `PisanoSampleApplication` via `PisanoSdkBootstrapper.ensureInitialized(...)` (boot once).
 
-### How can I display the widget in different languages?
+## 🔧 Troubleshooting
 
-You can display the widget in different languages using the `language` parameter:
+### Build fails: “SDK location not found”
 
-```kotlin
-PisanoSDK.show(language = "en") // English
-PisanoSDK.show(language = "tr") // Turkish
+Set `sdk.dir=...` in `local.properties`, or export `ANDROID_HOME` / `ANDROID_SDK_ROOT`.
+
+### Survey doesn’t open
+
+- Verify `PISANO_*` config values
+- Ensure network access
+
+### Runtime crash: `NoClassDefFoundError` (Retrofit / Gson)
+
+If you integrate the SDK into your own app and see errors like:
+
+- `retrofit2/Retrofit$Builder`
+- `com/google/gson/GsonBuilder`
+
+Ensure your app includes the required runtime deps (this sample does):
+
+```gradle
+implementation 'com.google.code.gson:gson:2.10.1'
+implementation 'com.squareup.retrofit2:retrofit:2.9.0'
+implementation 'com.squareup.retrofit2:converter-gson:2.9.0'
+implementation 'com.squareup.okhttp3:okhttp:4.9.3'
 ```
 
-### What is the display once feature?
+### Java usage error
 
 This feature ensures that the widget is shown to the user only once (or once per delay period). The backend sends `display_once` (boolean) and optionally `display_once_delay_period`. The SDK stores "shown" locally and, if a delay period is set, will not show again until that period has passed. **`display_once_delay_period` is in hours** (e.g. `24` = once per day). This matches iOS and fixes "once per day" behaviour on Android.
 
@@ -649,9 +802,13 @@ The SDK uses `code` (with `applicationId`, `accessKey`, `platform_id`, `bundle_i
 
 The backend can return `display_rate` (0–100). The SDK then decides deterministically whether to show or skip (e.g. 50% → show, skip, show, skip…). When skipped, the UI does not open and the callback receives `PisanoActions.DISPLAY_RATE_LIMITED`. Other cases: `DISPLAY_ONCE`, `CHANNEL_PASSIVE`, or quota/trigger rules.
 
-### What are the ProGuard/R8 rules?
+```java
+PisanoSDK.INSTANCE.show(...);
+```
 
-ProGuard rules for release builds are located in the `consumer-rules.pro` file. If you need to add custom rules:
+### ProGuard / R8 rules
+
+If you need custom rules:
 
 ```proguard
 # Pisano SDK
@@ -659,17 +816,23 @@ ProGuard rules for release builds are located in the `consumer-rules.pro` file. 
 -dontwarn co.pisano.feedback.**
 ```
 
-## 🔧 Troubleshooting
+## ✅ Smoke tests
 
-### SDK won't initialize
+This sample includes an instrumented smoke test: `PisanoSdkSmokeTest`.
 
 1. Make sure `applicationId`, `accessKey`, `code`, `apiUrl`, and `feedbackUrl` are set in `PisanoSDKManager.Builder(...)` (required); set `eventUrl` if you use `track`
 2. Check that API URLs are correct and accessible
 3. Check that internet permissions are in the `AndroidManifest.xml` file
 
-```xml
-<uses-permission android:name="android.permission.INTERNET" />
-<uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+- SDK init (boot once)
+- `PisanoSDK.healthCheck(...)`
+
+If credentials are missing, the test will **skip** (so CI won’t fail).
+
+Run on an emulator/device:
+
+```bash
+./gradlew :app:connectedAndroidTest
 ```
 
 ### Widget won't display
