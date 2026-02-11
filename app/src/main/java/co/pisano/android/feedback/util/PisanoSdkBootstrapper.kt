@@ -1,6 +1,7 @@
 package co.pisano.android.feedback.util
 
 import android.content.Context
+import co.pisano.android.feedback.BuildConfig
 import co.pisano.feedback.data.helper.ActionListener
 import co.pisano.feedback.data.helper.PisanoActions
 import co.pisano.feedback.managers.PisanoSDK
@@ -29,6 +30,7 @@ object PisanoSdkBootstrapper {
             val manager = PisanoSDKManager.Builder(context)
                 .setApplicationId(config.appId)
                 .setAccessKey(config.accessKey)
+                .setCode(config.code)
                 .setApiUrl(config.apiUrl)
                 .setFeedbackUrl(config.feedbackUrl)
                 .apply {
@@ -36,6 +38,7 @@ object PisanoSdkBootstrapper {
                         setEventUrl(config.eventUrl)
                     }
                 }
+                .setDebug(BuildConfig.DEBUG)
                 .setCloseStatusCallback(object : ActionListener {
                     override fun action(action: PisanoActions) {
                         PisanoSdkState.setLastAction(action)

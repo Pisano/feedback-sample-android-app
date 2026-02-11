@@ -11,6 +11,7 @@
     <string name="getting_started">Başlayalım</string>
     <string name="back">Geri</string>
     <string name="clear">Temizle</string>
+    <string name="health_check">Sağlık Kontrolü</string>
     <string name="config_missing">Konfigürasyon eksik. Lütfen PISANO_* değerlerini ayarlayın (README).</string>
     <string name="action_status">Aksiyon Durumu: %1$s</string>
     <string name="custom_title">Özel Başlık</string>

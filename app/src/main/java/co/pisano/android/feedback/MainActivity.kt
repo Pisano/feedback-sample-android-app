@@ -49,6 +49,7 @@ class MainActivity : AppCompatActivity() {
         val btnGettingStarted = findViewById<MaterialButton>(R.id.btnGettingStarted)
         val btnBack = findViewById<MaterialButton>(R.id.btnBack)
         val btnGetFeedback = findViewById<MaterialButton>(R.id.btnGetFeedback)
+        val btnHealthCheck = findViewById<MaterialButton>(R.id.btnHealthCheck)
         val btnClear = findViewById<MaterialButton>(R.id.btnClear)
 
         val txtConfigMissing = findViewById<TextView>(R.id.txtConfigMissing)
@@ -113,8 +114,34 @@ class MainActivity : AppCompatActivity() {
         btnClear.setOnClickListener {
             txtPreflight.text = ""
             PisanoSdkState.setLastAction(null)
-            // Also clear SDK-side action/state if needed.
             PisanoSDK.clearAction()
+        }
+
+        btnHealthCheck.setOnClickListener {
+            val codeOverride = FeedbackUtil.code
+            val customer = PisanoCustomer(
+                externalId = etExternalId.text?.toString().orEmpty().trim()
+            )
+            txtPreflight.text = getString(R.string.healthcheck_running)
+            txtPreflight.isVisible = true
+            AppLogger.i("healthCheck start (code=${codeOverride ?: "<init>"})")
+
+            PisanoSDK.healthCheck(
+                language = null,
+                pisanoCustomer = customer,
+                payload = null,
+                code = codeOverride
+            ) { ok ->
+                runOnUiThread {
+                    if (ok) {
+                        txtPreflight.text = getString(R.string.healthcheck_ok)
+                        AppLogger.i("healthCheck OK")
+                    } else {
+                        txtPreflight.text = getString(R.string.healthcheck_failed)
+                        AppLogger.w("healthCheck failed")
+                    }
+                }
+            }
         }
 
         btnGetFeedback.setOnClickListener {
@@ -126,7 +153,7 @@ class MainActivity : AppCompatActivity() {
                 return@setOnClickListener
             }
 
-            val flowId = FeedbackUtil.flowId ?: ""
+            val codeOverride = FeedbackUtil.code
             val customer = PisanoCustomer(
                 name = etName.text?.toString().orEmpty().trim(),
                 email = email,
@@ -159,43 +186,23 @@ class MainActivity : AppCompatActivity() {
                 )
             }
 
-            if (BuildConfig.DEBUG) {
-                txtPreflight.text = getString(R.string.healthcheck_running)
-            }
-            AppLogger.i("healthCheck start (flowId=${if (flowId.isBlank()) "<default>" else flowId})")
+            AppLogger.i("show requested (mode=$viewMode, code=${codeOverride ?: "<init>"})")
 
-            PisanoSDK.healthCheck(
-                flowId = if (flowId.isBlank()) null else flowId,
+            PisanoSDK.show(
+                viewMode = viewMode,
+                title = title,
                 language = null,
                 payload = null,
-                pisanoCustomer = customer
-            ) { ok ->
-                runOnUiThread {
-                    if (!ok) {
-                        if (BuildConfig.DEBUG) txtPreflight.text = getString(R.string.healthcheck_failed)
-                        AppLogger.w("healthCheck failed")
-                        return@runOnUiThread
-                    }
-
-                    if (BuildConfig.DEBUG) txtPreflight.text = getString(R.string.healthcheck_ok)
-                    AppLogger.i("show requested (mode=$viewMode, flowId=${if (flowId.isBlank()) "<default>" else flowId})")
-                    PisanoSDK.show(
-                        viewMode = viewMode,
-                        title = title,
-                        flowId = if (flowId.isBlank()) null else flowId,
-                        language = null,
-                        payload = null,
-                        pisanoCustomer = customer
-                    )
-                }
-            }
+                pisanoCustomer = customer,
+                code = codeOverride
+            )
         }
     }
 
     private fun parseDeepLink() {
         intent.data?.let { data ->
             if (data.host == "show") {
-                FeedbackUtil.flowId = intent.data?.getQueryParameter("flow_id")
+                FeedbackUtil.code = data.getQueryParameter("code")
             }
         }
     }
