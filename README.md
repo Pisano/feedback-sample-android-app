@@ -68,7 +68,7 @@ allprojects {
 
 ```gradle
 dependencies {
-    implementation 'co.pisano:feedback:1.3.27'
+    implementation 'co.pisano:feedback:1.3.28'
 }
 ```
 
@@ -131,6 +131,7 @@ See: [Local credentials (do not commit)](#local-credentials-do-not-commit)
 
 - `PISANO_APP_ID`
 - `PISANO_ACCESS_KEY`
+- `PISANO_CODE` (your survey/channel code from the Pisano panel)
 - `PISANO_API_URL`
 - `PISANO_FEEDBACK_URL`
 - `PISANO_EVENT_URL` (optional)
@@ -147,57 +148,9 @@ If config is missing, init is skipped and the sample shows a user-facing warning
 
 In this sample, `MainActivity` calls `PisanoSDK.show(...)` when you press **Get Feedback**.
 
-The sample also supports a deep link to pass `flowId`:
+The sample also supports a deep link to pass a code override:
 
-- `pisano://show?flow_id=...`
-
-## 📚 API Reference
-
-### `PisanoSDK.init()`
-
-Initializes the SDK. Call this once at app startup (recommended) or before calling `show()`.
-
-**Parameters (via `PisanoSDKManager.Builder`)**:
-- `setApplicationId(String)` (required)
-- `setAccessKey(String)` (required)
-- `setApiUrl(String)` (required)
-- `setFeedbackUrl(String)` (required)
-- `setEventUrl(String)` (optional)
-- `setCloseStatusCallback(ActionListener)` (optional)
-
-### `PisanoSDK.show()`
-
-Shows the feedback/survey UI provided by the SDK.
-
-**Parameters:**
-- `viewMode: ViewMode` (default: `ViewMode.DEFAULT`)
-- `title: Title?` (optional)
-- `flowId: String?` (optional)
-- `language: String?` (optional)
-- `payload: HashMap<String, String>?` (optional)
-- `pisanoCustomer: PisanoCustomer?` (optional)
-
-### `PisanoSDK.healthCheck()`
-
-Checks SDK status. This sample includes an instrumented smoke test that calls `healthCheck` when config is present.
-
-**Parameters:**
-- `flowId: String?` (optional)
-- `language: String?` (optional)
-- `payload: HashMap<String, String>?` (optional)
-- `pisanoCustomer: PisanoCustomer?` (optional)
-- `isHealthCheckSuccessful: (Boolean) -> Unit`
-
-### `PisanoActions`
-
-The `PisanoActions` enum is returned by SDK callbacks to indicate the result of an operation.
-
-Common values:
-- `INIT_SUCCESS`, `INIT_FAILED`
-- `OPENED`, `CLOSED`, `OUTSIDE`
-- `SEND_FEEDBACK`
-- `DISPLAY_ONCE`, `PREVENT_MULTIPLE_FEEDBACK`
-- `CHANNEL_QUOTA_EXCEEDED`
+- `pisano://show?code=...`
 
 ## 💡 Usage Examples
 
@@ -269,10 +222,11 @@ public class MyApplication extends Application {
         PisanoSDKManager manager = new PisanoSDKManager.Builder(this)
             .setApplicationId("YOUR_APP_ID")
             .setAccessKey("YOUR_ACCESS_KEY")
-            .setCode("YOUR_CODE")
+            .setCode("YOUR_CODE")                    // required
             .setApiUrl("https://api.pisano.co")
             .setFeedbackUrl("https://web.pisano.co/web_feedback")
             .setEventUrl("https://track.pisano.co/track")
+            .setDebug(BuildConfig.DEBUG)              // optional, recommended
             .setCloseStatusCallback(new ActionListener() {
                 @Override
                 public void action(PisanoActions action) {
@@ -622,8 +576,10 @@ The SDK also notifies about widget close status through the `ActionListener` cal
 val manager = PisanoSDKManager.Builder(context)
     .setApplicationId("YOUR_APP_ID")
     .setAccessKey("YOUR_ACCESS_KEY")
+    .setCode("YOUR_CODE")                    // required
     .setApiUrl("https://api.pisano.co")
     .setFeedbackUrl("https://web.pisano.co/web_feedback")
+    .setDebug(BuildConfig.DEBUG)              // optional, recommended
     .setCloseStatusCallback(object : ActionListener {
         override fun action(action: PisanoActions) {
             when (action) {
@@ -789,22 +745,19 @@ implementation 'com.squareup.retrofit2:converter-gson:2.9.0'
 implementation 'com.squareup.okhttp3:okhttp:4.9.3'
 ```
 
-### Java usage error
+### Display once (`display_once`)
 
-This feature ensures that the widget is shown to the user only once (or once per delay period). The backend sends `display_once` (boolean) and optionally `display_once_delay_period`. The SDK stores "shown" locally and, if a delay period is set, will not show again until that period has passed. **`display_once_delay_period` is in hours** (e.g. `24` = once per day). This matches iOS and fixes "once per day" behaviour on Android.
+The backend can send `display_once` (boolean) and optionally `display_once_delay_period`. The SDK stores "shown" state locally and, if a delay period is set, will not show again until that period has passed. **`display_once_delay_period` is in hours** (e.g. `24` = once per day). When skipped, the callback receives `PisanoActions.DISPLAY_ONCE`.
 
 ### Why is `code` required in init?
 
-The SDK uses `code` (with `applicationId`, `accessKey`, `platform_id`, `bundle_id`) in every `/detail` and `/trigger` request. It is stored once at `PisanoSDK.init(...)` (boot) and reused for all subsequent calls. **On Android, `bundle_id` is the application package name** (`context.packageName`).  
-**In `show()` and `healthCheck()`:** you can optionally pass `code`. If you **do not** pass it, the **init (boot) code** is used. If you pass it, that code is used for that call only (e.g. to show or check another widget).
+`code` is your survey/channel code from the Pisano panel. The SDK sends it (along with `applicationId`, `accessKey`, and `bundle_id`) in every `/detail` and `/trigger` request. It is stored once at `PisanoSDK.init(...)` and reused for all subsequent calls. **On Android, `bundle_id` is the application package name** (`context.packageName`).
+
+In `show()` and `healthCheck()`, `code` is **optional**. If you **do not** pass it, the SDK uses the **init code**. If you pass it, that code is used for that call only (e.g. to show a different survey).
 
 ### Why does `show()` sometimes not open the survey?
 
-The backend can return `display_rate` (0–100). The SDK then decides deterministically whether to show or skip (e.g. 50% → show, skip, show, skip…). When skipped, the UI does not open and the callback receives `PisanoActions.DISPLAY_RATE_LIMITED`. Other cases: `DISPLAY_ONCE`, `CHANNEL_PASSIVE`, or quota/trigger rules.
-
-```java
-PisanoSDK.INSTANCE.show(...);
-```
+The backend can return `display_rate` (0–100). The SDK decides deterministically whether to show or skip (e.g. 50 → show, skip, show, skip…). When skipped, the UI does not open and the callback receives `PisanoActions.DISPLAY_RATE_LIMITED`. Other cases: `DISPLAY_ONCE`, `CHANNEL_PASSIVE`, or quota/trigger rules.
 
 ### ProGuard / R8 rules
 
