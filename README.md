@@ -68,7 +68,7 @@ allprojects {
 
 ```gradle
 dependencies {
-    implementation 'co.pisano:feedback:1.3.28'
+    implementation 'co.pisano:feedback:1.3.30'
 }
 ```
 
