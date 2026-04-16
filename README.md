@@ -1,30 +1,161 @@
-# Feedback Android SDK
+# Feedback Android SDK (Sample App)
 
-Pisano Feedback Android SDK is an SDK that allows you to easily integrate user feedback collection into your Android applications.
+Pisano Feedback Android SDK helps you collect surveys and user feedback in your Android applications.
 
 > This repository is a **sample app repo**. The **SDK source code is not in this repo**.
 
-This repository contains a **public sample app**:
+## ✅ Sample app in this repo
 
-- The sample app UI (screens, inputs, buttons) is **native** (XML Views + Kotlin).
-- The survey/question UI is **rendered by the SDK** after calling `PisanoSDK.show(...)` (the app does not build survey screens itself).
+- **Module:** `app/` — single sample application (XML layouts + Kotlin).
+- The sample UI (buttons, forms) is **native**; the survey UI is **rendered by the SDK** after `PisanoSDK.show(...)` (your app does not build survey screens itself).
+
+SDK artifact used by this sample: **`co.pisano:feedback`** (version **1.3.30**, Maven Central)
+
+## Pisano Feedback Android SDK — v1.3.30 Release Notes
+
+### What's new in v1.3.30
+
+- **Sample alignment:** This repository’s `app/build.gradle` depends on **`co.pisano:feedback:1.3.30`**.
+- **For integrators on 1.3.28 / 1.3.29:** Treat **1.3.30** as a **recommended upgrade** on the same public API surface: **`setCode(...)` required** in `PisanoSDKManager.Builder`, optional per-call `code` on `show` / `healthCheck`, **no `flowId`**. Bump the dependency and rebuild; no API migration is needed if you are already on the post–1.3.27 model.
+
+Framework-level details: [Pisano/feedback-android](https://github.com/Pisano/feedback-android) releases.
+
+---
+
+### Breaking changes (only when migrating from **≤ 1.3.27**)
+
+These changes landed in **1.3.28+** and still apply in **1.3.30**.
+
+#### `setCode(...)` is required in SDK initialization
+
+You must call `.setCode("YOUR_CODE")` on `PisanoSDKManager.Builder`. This is your survey/channel **code** from the Pisano panel.
+
+```kotlin
+val manager = PisanoSDKManager.Builder(context)
+    .setApplicationId("YOUR_APP_ID")
+    .setAccessKey("YOUR_ACCESS_KEY")
+    .setCode("YOUR_CODE")   // required
+    .setApiUrl("https://api.pisano.co")
+    .setFeedbackUrl("https://web.pisano.co/web_feedback")
+    .setEventUrl("https://track.pisano.co/track")   // optional
+    .setDebug(BuildConfig.DEBUG)                    // optional, recommended
+    .build()
+
+PisanoSDK.init(manager)
+```
+
+#### `flowId` removed
+
+All APIs use **`code`** instead of **`flowId`**. Update every `show()`, `healthCheck()`, and related usage accordingly.
+
+---
+
+### API reference (v1.3.30) — `code` on `show` / `healthCheck`
+
+**Single rule:** The value you pass to **`.setCode(...)`** on the **Builder** (before `PisanoSDK.init(manager)`) is the **default** survey/channel for the SDK session. On **`PisanoSDK.show(...)`** and **`PisanoSDK.healthCheck(...)`**, if you **omit `code` or pass `null`**, the SDK **always** uses that **init** code. A **non-null** `code` argument **overrides the init code for that call only**; the next call without `code` uses the init default again.
+
+#### `PisanoSDK.show(...)`
+
+- **`code` is optional.** Omitted / `null` → use **`.setCode(...)` from init**.
+- Non-null `code` → override **for this `show` only**.
+
+#### `PisanoSDK.healthCheck(...)`
+
+- Same rule: **omit or `null` → init `code`**; non-null → **override for this check only**.
+
+---
+
+### New features / behaviour notes
+
+#### Per-call `code` override
+
+Useful when one app displays **multiple** surveys from different channels.
+
+```kotlin
+// Uses init (Builder) code (no per-call override)
+PisanoSDK.show()
+
+// Override for this call only (example)
+PisanoSDK.show(
+    viewMode = ViewMode.BOTTOM_SHEET,
+    language = "tr",
+    code = "ANOTHER_SURVEY_CODE"
+)
+```
+
+#### Display rate limiting (`display_rate`)
+
+The backend may return `display_rate` (0–100). When this call is skipped, the SDK does not open the UI and emits **`PisanoActions.DISPLAY_RATE_LIMITED`** via your `ActionListener`.
+
+#### Display once (`display_once`)
+
+When the survey is configured to show only once (or within a delay window), the SDK may emit **`PisanoActions.DISPLAY_ONCE`** and skip opening the widget again.
+
+#### Debug mode
+
+```kotlin
+.setDebug(BuildConfig.DEBUG)   // verbose logs in debug builds
+```
+
+---
+
+### Migration guide
+
+#### 1) Update dependency
+
+```gradle
+dependencies {
+    implementation 'co.pisano:feedback:1.3.30'
+}
+```
+
+#### 2) Add `setCode(...)` to the Builder (required)
+
+- Before (≤ 1.3.27): `setCode` was not required.
+- After (1.3.28+): **`setCode` is required**.
+
+#### 3) Replace `flowId` with `code` in `show` / `healthCheck`
+
+```kotlin
+// Before (1.3.27)
+// PisanoSDK.show(..., flowId = "SOME_FLOW")
+
+// After — explicit survey code for this call
+PisanoSDK.show(viewMode = ViewMode.DEFAULT, code = "SOME_CODE")
+
+// Or use the default from init (omit `code` entirely)
+PisanoSDK.show()
+```
+
+---
+
+### Summary
+
+| API | `code` | If you omit `code` (or pass `null`) |
+|-----|--------|-------------------------------------|
+| `PisanoSDKManager.Builder.setCode(...)` | **Required** | N/A — init cannot run without it |
+| `PisanoSDK.show(..., code = ...)` | Optional | **Always** uses the **code from `setCode` / `init`** |
+| `PisanoSDK.healthCheck(..., code = ...)` | Optional | **Always** uses the **code from `setCode` / `init`** |
+| `PisanoSDK.track(...)` | N/A | Uses current SDK context |
 
 ## 📋 Table of Contents
 
+- [Pisano Feedback Android SDK — v1.3.30 Release Notes](#pisano-feedback-android-sdk--v1330-release-notes)
 - [Features](#features)
 - [Requirements](#requirements)
 - [Installation](#installation)
 - [Run the sample app](#run-the-sample-app)
 - [Local credentials (do not commit)](#local-credentials-do-not-commit)
 - [Quick Start](#quick-start)
+- [Code samples](#code-samples)
 - [API Reference](#api-reference)
-- [Usage Examples](#usage-examples)
 - [Configuration](#configuration)
 - [Build / Run](#build--run)
 - [Tests](#tests)
 - [Frequently Asked Questions](#frequently-asked-questions)
 - [Troubleshooting](#troubleshooting)
 - [Smoke tests](#smoke-tests)
+- [Pisano platform: where to get credentials](#pisano-platform-where-to-get-credentials)
 
 ## ✨ Features
 
@@ -42,12 +173,13 @@ This repository contains a **public sample app**:
 
 ## 📱 Requirements
 
-From this sample project:
+From this sample project (`app/build.gradle` and root `build.gradle`):
 
-- **minSdk**: 21 (`app/build.gradle`)
-- **targetSdk/compileSdk**: 31 (`app/build.gradle`)
-- **Android Gradle Plugin**: 7.2.1 (root `build.gradle`)
-- **Kotlin**: 1.6.10 (root `build.gradle`)
+- **minSdk**: 21
+- **compileSdk / targetSdk**: 34
+- **Java**: 17 (toolchain / `compileOptions`)
+- **Android Gradle Plugin**: 8.7.3
+- **Kotlin**: 1.9.24
 
 ## 📦 Installation
 
@@ -152,7 +284,13 @@ The sample also supports a deep link to pass a code override:
 
 - `pisano://show?code=...`
 
-## 💡 Usage Examples
+### About `code` (init default vs per-call override)
+
+**Single rule to remember:** whatever you pass to **`.setCode(...)`** on **`PisanoSDKManager.Builder`** becomes the **default** channel/survey code for the process after **`PisanoSDK.init(manager)`**. On **`show`** and **`healthCheck`**, if you **do not pass `code` (or you pass `null` where the API allows it)**, the SDK **always** uses that **init** code—it does not pick a different code by itself.
+
+- **Multi-survey apps:** pass an explicit **`code`** on each **`show(...)`** so it is obvious which survey each screen opens.
+
+## 💡 Code samples
 
 ### 1) Initializing the SDK
 
@@ -161,6 +299,7 @@ You can initialize at app startup (recommended):
 ```kotlin
 import android.app.Application
 import android.util.Log
+import com.example.app.BuildConfig   // replace with your application module’s BuildConfig
 import co.pisano.feedback.data.helper.ActionListener
 import co.pisano.feedback.data.helper.PisanoActions
 import co.pisano.feedback.managers.PisanoSDK
@@ -177,6 +316,7 @@ class MyApplication : Application() {
             .setApiUrl("https://api.pisano.co")
             .setFeedbackUrl("https://web.pisano.co/web_feedback")
             .setEventUrl("https://track.pisano.co/track")
+            .setDebug(BuildConfig.DEBUG)
             .setCloseStatusCallback(object : ActionListener {
                 override fun action(action: PisanoActions) {
                     when (action) {
@@ -242,12 +382,12 @@ public class MyApplication extends Application {
 
 ### 2) Showing the Feedback Widget
 
-Basic usage:
+Basic usage (uses **init** `code`; no per-call override):
 
 ```kotlin
 import co.pisano.feedback.managers.PisanoSDK
 
-PisanoSDK.show()
+PisanoSDK.show()   // same as omitting `code` — uses `.setCode(...)` from Builder / init
 ```
 
 Advanced usage:
@@ -285,7 +425,8 @@ PisanoSDK.show(
     title = title,
     language = "en",
     payload = payload,
-    pisanoCustomer = customer
+    pisanoCustomer = customer,
+    code = null   // explicit: use init `code`; pass a non-null string to override for this call only
 )
 ```
 
@@ -376,16 +517,20 @@ PisanoSDK.show(
     title = title,
     language = "en",
     payload = null,
-    pisanoCustomer = customer
+    pisanoCustomer = customer,
+    code = null   // use init `code`
 )
 ```
 
-**Using init (boot) code (default):**  
-If you do not pass `code`, the SDK uses the code set in `PisanoSDK.init(...)`.
+**Using init code (default):**  
+If you **omit** `code` or pass **`null`**, the SDK **always** uses the **`.setCode(...)`** value from **`PisanoSDKManager.Builder` / `PisanoSDK.init`**.
 
 ```kotlin
-// Uses the code from init (boot)
+// Uses the code from init — `code` omitted
 PisanoSDK.show(viewMode = ViewMode.BOTTOM_SHEET, language = "en")
+
+// Equivalent intent — explicit null where you name other parameters
+PisanoSDK.show(viewMode = ViewMode.BOTTOM_SHEET, language = "en", code = null)
 ```
 
 **Overriding code for a single call:**  
@@ -480,18 +625,12 @@ PisanoSDK.healthCheck(
 }
 ```
 
-## 💡 Usage Examples
-
-### Kotlin Usage
-
-#### Usage in Activity
+### Activity integration (Kotlin / Java)
 
 ```kotlin
 import androidx.appcompat.app.AppCompatActivity
-import co.pisano.feedback.managers.PisanoSDK
 import co.pisano.feedback.data.helper.ViewMode
 import co.pisano.feedback.data.model.PisanoCustomer
-import co.pisano.feedback.data.model.Title
 import co.pisano.feedback.managers.PisanoSDK
 
 class MainActivity : AppCompatActivity() {
@@ -504,7 +643,8 @@ class MainActivity : AppCompatActivity() {
             PisanoSDK.show(
                 viewMode = ViewMode.BOTTOM_SHEET,
                 language = "en",
-                pisanoCustomer = PisanoCustomer(externalId = "USER-123")
+                pisanoCustomer = PisanoCustomer(externalId = "USER-123"),
+                code = null   // use init `code`; set non-null to override for this call only
             )
         }
         
@@ -544,11 +684,11 @@ public class MainActivity extends AppCompatActivity {
             
             PisanoSDK.INSTANCE.show(
                 ViewMode.BOTTOM_SHEET,
-                null,
-                null,
-                "en",
-                null,
-                customer
+                null,           // title
+                "en",           // language
+                null,           // payload
+                customer,
+                null            // code — null uses init `setCode`; non-null overrides this call only
             );
         });
         
@@ -718,6 +858,14 @@ No. The sample app UI is native, but the survey/question UI is rendered by the S
 
 In `PisanoSampleApplication` via `PisanoSdkBootstrapper.ensureInitialized(...)` (boot once).
 
+### When should I initialize the SDK?
+
+Call **`PisanoSDK.init(...)`** once at application startup (typically in your `Application` class), **before** the first `PisanoSDK.show(...)` / `healthCheck` / `track`.
+
+### Should I use `healthCheck`?
+
+Yes, when you want to verify reachability or configuration before opening the widget (same idea as the iOS sample: **health check → then `show`**).
+
 ## 🔧 Troubleshooting
 
 ### Build fails: “SDK location not found”
@@ -753,7 +901,7 @@ The backend can send `display_once` (boolean) and optionally `display_once_delay
 
 `code` is your survey/channel code from the Pisano panel. The SDK sends it (along with `applicationId`, `accessKey`, and `bundle_id`) in every `/detail` and `/trigger` request. It is stored once at `PisanoSDK.init(...)` and reused for all subsequent calls. **On Android, `bundle_id` is the application package name** (`context.packageName`).
 
-In `show()` and `healthCheck()`, `code` is **optional**. If you **do not** pass it, the SDK uses the **init code**. If you pass it, that code is used for that call only (e.g. to show a different survey).
+In `show()` and `healthCheck()`, `code` is **optional**. If you **omit it or pass `null`**, the SDK **always** uses the **exact `code` from `.setCode(...)` / `init`**—not another implicit value. If you pass a **non-null** string, that value is used **for that call only**; the next call without `code` uses the init default again.
 
 ### Why does `show()` sometimes not open the survey?
 
@@ -810,3 +958,34 @@ Bottom sheet feature depends on Material Design Components. If the bottom sheet 
 ### MinifyEnabled error
 
 Check your ProGuard rules. The `consumer-rules.pro` file is automatically included, but you may need to add custom rules.
+
+## Pisano platform: where to get credentials
+
+The values you use in the SDK (`applicationId` / `accessKey` / `code` / `apiUrl` / `feedbackUrl`) come from the **Pisano panel**. The steps match the **iOS sample documentation**; screenshots are hosted in [`Pisano/feedback-sample-ios-app`](https://github.com/Pisano/feedback-sample-ios-app) so you can paste the same images into Confluence or view them on GitHub.
+
+### 1. App ID and Access Key (Profile → Mobile applications)
+
+1. In the Pisano panel, go to **Profile** → **Mobile applications** (or equivalent).
+2. Click **Create Mobile Application**.
+3. Enter an **Application name** and add **package name / bundle identifiers** for each platform (Android package name, e.g. `com.yourcompany.app`).
+4. Save. The app card shows **App ID** and **Access Key** (copy buttons).
+
+![Create Mobile Application](https://raw.githubusercontent.com/Pisano/feedback-sample-ios-app/main/docs/pisano-platform/create-mobile-app.png)
+
+![Edit Mobile Application](https://raw.githubusercontent.com/Pisano/feedback-sample-ios-app/main/docs/pisano-platform/edit-mobile-app.png)
+
+![App credentials — App ID and Access Key](https://raw.githubusercontent.com/Pisano/feedback-sample-ios-app/main/docs/pisano-platform/app-credentials.png)
+
+Use **App ID** with `.setApplicationId(...)` and **Access Key** with `.setAccessKey(...)`.
+
+### 2. Code, API URL, and Feedback URL (Mobile Channels → Deploy)
+
+1. Go to **Mobile Channels**, create or open a channel, then click **Deploy**.
+2. In **Publish Channel Parameters**, copy from the top section:
+   - **Code** → `.setCode("...")` (required at init; optional override on `show` / `healthCheck`)
+   - **Api Url** → `.setApiUrl("...")`
+   - **Feedback Url** → `.setFeedbackUrl("...")`
+
+Ignore **Legacy credentials** in that modal for the current SDK model; use **Code**, **Api Url**, and **Feedback Url** from the top, plus **App ID** and **Access Key** from step 1.
+
+![Publish Channel Parameters](https://raw.githubusercontent.com/Pisano/feedback-sample-ios-app/main/docs/pisano-platform/publish-channel-params.png)
