@@ -758,11 +758,11 @@ PisanoSDK.init(manager)
 import co.pisano.feedback.data.helper.ViewMode
 import co.pisano.feedback.managers.PisanoSDK
 
-// Full-screen overlay (default)
-PisanoSDK.show(viewMode = ViewMode.DEFAULT)
+// Full-screen overlay (default) — uses init `code`
+PisanoSDK.show(viewMode = ViewMode.DEFAULT, code = null)
 
-// Bottom sheet
-PisanoSDK.show(viewMode = ViewMode.BOTTOM_SHEET)
+// Bottom sheet — uses init `code`
+PisanoSDK.show(viewMode = ViewMode.BOTTOM_SHEET, code = null)
 ```
 
 ### Display Rate (`display_rate`)
@@ -793,7 +793,7 @@ val title = Title(
   backgroundColor = Color.WHITE
 )
 
-PisanoSDK.show(title = title)
+PisanoSDK.show(title = title, code = null)   // use init `code`
 ```
 
 ### User Information
@@ -813,7 +813,7 @@ val customer = PisanoCustomer(
   )
 )
 
-PisanoSDK.show(pisanoCustomer = customer)
+PisanoSDK.show(pisanoCustomer = customer, code = null)
 ```
 
 **Valid user keys (customer attributes):**
