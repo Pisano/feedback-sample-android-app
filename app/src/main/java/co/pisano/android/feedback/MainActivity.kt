@@ -65,6 +65,7 @@ class MainActivity : AppCompatActivity() {
         val etCustomTitle = findViewById<TextInputEditText>(R.id.etCustomTitle)
 
         val rgViewMode = findViewById<RadioGroup>(R.id.rgViewMode)
+        val rgDismissOnDrag = findViewById<RadioGroup>(R.id.rgDismissOnDrag)
         val rgFontSize = findViewById<RadioGroup>(R.id.rgFontSize)
         val rgFontStyle = findViewById<RadioGroup>(R.id.rgFontStyle)
 
@@ -166,6 +167,8 @@ class MainActivity : AppCompatActivity() {
                 else -> ViewMode.DEFAULT
             }
 
+            val dismissOnDrag = rgDismissOnDrag.checkedRadioButtonId == R.id.rbDismissOnDragOn
+
             val titleText = etCustomTitle.text?.toString().orEmpty().trim()
             val title: Title? = titleText.takeIf { it.isNotBlank() }?.let {
                 val size = when (rgFontSize.checkedRadioButtonId) {
@@ -186,7 +189,7 @@ class MainActivity : AppCompatActivity() {
                 )
             }
 
-            AppLogger.i("show requested (mode=$viewMode, code=${codeOverride ?: "<init>"})")
+            AppLogger.i("show requested (mode=$viewMode, dismissOnDrag=$dismissOnDrag, code=${codeOverride ?: "<init>"})")
 
             PisanoSDK.show(
                 viewMode = viewMode,
@@ -194,7 +197,8 @@ class MainActivity : AppCompatActivity() {
                 language = null,
                 payload = null,
                 pisanoCustomer = customer,
-                code = codeOverride
+                code = codeOverride,
+                dismissOnDrag = dismissOnDrag,
             )
         }
     }
