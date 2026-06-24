@@ -9,13 +9,28 @@ Pisano Feedback Android SDK helps you collect surveys and user feedback in your 
 - **Module:** `app/` — single sample application (XML layouts + Kotlin).
 - The sample UI (buttons, forms) is **native**; the survey UI is **rendered by the SDK** after `PisanoSDK.show(...)` (your app does not build survey screens itself).
 
-SDK artifact used by this sample: **`co.pisano:feedback`** (version **1.3.30**, Maven Central)
+SDK artifact used by this sample: **`co.pisano:feedback`** (version **1.3.31**, Maven Central)
 
-## Pisano Feedback Android SDK — v1.3.30 Release Notes
+## MT-41 — Bottom sheet `dismissOnDrag` (sample UI)
+
+The form screen includes **View Mode** (Default / Bottom Sheet) and **Dismiss on drag** (Off / On). The selected value is passed to `PisanoSDK.show(..., dismissOnDrag = ...)`.
+
+- **Off (default):** Header drag resizes the sheet; WebView scroll does not move the sheet; drag-to-dismiss disabled.
+- **On:** Swipe down from the header to dismiss.
+
+Details: [RELEASE_NOTES_1.3.31.md](./RELEASE_NOTES_1.3.31.md)
+
+## Pisano Feedback Android SDK — v1.3.31 Release Notes
+
+### What's new in v1.3.31 (MT-41)
+
+- **`dismissOnDrag` parameter** on `PisanoSDK.show()` (optional, default `false`).
+- **Bottom sheet default behaviour** aligned with iOS: half-height open, header-only drag, no partial collapse below half, Samsung scrim fix.
+- **Sample alignment:** This repository depends on **`co.pisano:feedback:1.3.31`** and exposes Off/On toggle in `MainActivity`.
 
 ### What's new in v1.3.30
 
-- **Sample alignment:** This repository’s `app/build.gradle` depends on **`co.pisano:feedback:1.3.30`**.
+- **Sample alignment:** Previously pinned to **`co.pisano:feedback:1.3.30`** (superseded by **1.3.31** — see MT-41 above).
 - **For integrators on 1.3.28 / 1.3.29:** Treat **1.3.30** as a **recommended upgrade** on the same public API surface: **`setCode(...)` required** in `PisanoSDKManager.Builder`, optional per-call `code` on `show` / `healthCheck`, **no `flowId`**. Bump the dependency and rebuild; no API migration is needed if you are already on the post–1.3.27 model.
 
 Framework-level details: [Pisano/feedback-android](https://github.com/Pisano/feedback-android) releases.
@@ -24,7 +39,7 @@ Framework-level details: [Pisano/feedback-android](https://github.com/Pisano/fee
 
 ### Breaking changes (only when migrating from **≤ 1.3.27**)
 
-These changes landed in **1.3.28+** and still apply in **1.3.30**.
+These changes landed in **1.3.28+** and still apply in **1.3.31**.
 
 #### `setCode(...)` is required in SDK initialization
 
@@ -50,7 +65,7 @@ All APIs use **`code`** instead of **`flowId`**. Update every `show()`, `healthC
 
 ---
 
-### API reference (v1.3.30) — `code` on `show` / `healthCheck`
+### API reference (v1.3.31) — `code` on `show` / `healthCheck`
 
 **Single rule:** The value you pass to **`.setCode(...)`** on the **Builder** (before `PisanoSDK.init(manager)`) is the **default** survey/channel for the SDK session. On **`PisanoSDK.show(...)`** and **`PisanoSDK.healthCheck(...)`**, if you **omit `code` or pass `null`**, the SDK **always** uses that **init** code. A **non-null** `code` argument **overrides the init code for that call only**; the next call without `code` uses the init default again.
 
@@ -105,7 +120,7 @@ When the survey is configured to show only once (or within a delay window), the 
 
 ```gradle
 dependencies {
-    implementation 'co.pisano:feedback:1.3.30'
+    implementation 'co.pisano:feedback:1.3.31'
 }
 ```
 
@@ -140,7 +155,7 @@ PisanoSDK.show()
 
 ## 📋 Table of Contents
 
-- [Pisano Feedback Android SDK — v1.3.30 Release Notes](#pisano-feedback-android-sdk--v1330-release-notes)
+- [Pisano Feedback Android SDK — v1.3.31 Release Notes](#pisano-feedback-android-sdk--v1330-release-notes)
 - [Features](#features)
 - [Requirements](#requirements)
 - [Installation](#installation)
@@ -200,7 +215,7 @@ allprojects {
 
 ```gradle
 dependencies {
-    implementation 'co.pisano:feedback:1.3.30'
+    implementation 'co.pisano:feedback:1.3.31'
 }
 ```
 

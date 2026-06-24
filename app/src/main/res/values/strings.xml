@@ -23,6 +23,9 @@
     <string name="view_mode">View Mode</string>
     <string name="view_mode_default">Default</string>
     <string name="view_mode_bottom_sheet">Bottom Sheet</string>
+    <string name="dismiss_on_drag">Dismiss on drag (bottom sheet)</string>
+    <string name="dismiss_on_drag_off">Off</string>
+    <string name="dismiss_on_drag_on">On</string>
 
     <!-- Welcome screen -->
     <string name="welcome_feedback">Feedback</string>

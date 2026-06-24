@@ -280,6 +280,33 @@
                     </RadioGroup>
 
                     <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:text="@string/dismiss_on_drag"
+                        android:textSize="14sp" />
+
+                    <RadioGroup
+                        android:id="@+id/rgDismissOnDrag"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal">
+
+                        <RadioButton
+                            android:id="@+id/rbDismissOnDragOff"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:checked="true"
+                            android:text="@string/dismiss_on_drag_off" />
+
+                        <RadioButton
+                            android:id="@+id/rbDismissOnDragOn"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/dismiss_on_drag_on" />
+                    </RadioGroup>
+
+                    <TextView
                         android:id="@+id/txtActionStatus"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
