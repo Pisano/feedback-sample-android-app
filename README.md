@@ -9,7 +9,17 @@ Pisano Feedback Android SDK helps you collect surveys and user feedback in your 
 - **Module:** `app/` — single sample application (XML layouts + Kotlin).
 - The sample UI (buttons, forms) is **native**; the survey UI is **rendered by the SDK** after `PisanoSDK.show(...)` (your app does not build survey screens itself).
 
-SDK artifact used by this sample: **`co.pisano:feedback`** (version **1.3.31**, Maven Central)
+SDK artifact used by this sample: **`co.pisano:feedback`** (version **1.3.32**, Maven Central)
+
+Details: [RELEASE_NOTES_1.3.32.md](./RELEASE_NOTES_1.3.32.md)
+
+## Pisano Feedback Android SDK — v1.3.32 Release Notes
+
+### What's new in v1.3.32
+
+- **Security:** Removed `usesCleartextTraffic="true"` from the SDK manifest (host apps are no longer forced to allow HTTP via manifest merge).
+- **Includes:** All **1.3.31** changes (MT-41 bottom sheet, `dismissOnDrag`, Samsung scrim fix).
+- **Sample alignment:** This repository depends on **`co.pisano:feedback:1.3.32`**.
 
 ## MT-41 — Bottom sheet `dismissOnDrag` (sample UI)
 
@@ -18,15 +28,13 @@ The form screen includes **View Mode** (Default / Bottom Sheet) and **Dismiss on
 - **Off (default):** Header drag resizes the sheet; WebView scroll does not move the sheet; drag-to-dismiss disabled.
 - **On:** Swipe down from the header to dismiss.
 
-Details: [RELEASE_NOTES_1.3.31.md](./RELEASE_NOTES_1.3.31.md)
-
-## Pisano Feedback Android SDK — v1.3.31 Release Notes
+## Pisano Feedback Android SDK — v1.3.31 Release Notes (included in 1.3.32)
 
 ### What's new in v1.3.31 (MT-41)
 
 - **`dismissOnDrag` parameter** on `PisanoSDK.show()` (optional, default `false`).
 - **Bottom sheet default behaviour** aligned with iOS: half-height open, header-only drag, no partial collapse below half, Samsung scrim fix.
-- **Sample alignment:** This repository depends on **`co.pisano:feedback:1.3.31`** and exposes Off/On toggle in `MainActivity`.
+- **Sample alignment:** This repository depends on **`co.pisano:feedback:1.3.32`** and exposes Off/On toggle in `MainActivity`.
 
 ### What's new in v1.3.30
 
@@ -120,7 +128,7 @@ When the survey is configured to show only once (or within a delay window), the 
 
 ```gradle
 dependencies {
-    implementation 'co.pisano:feedback:1.3.31'
+    implementation 'co.pisano:feedback:1.3.32'
 }
 ```
 
@@ -215,7 +223,7 @@ allprojects {
 
 ```gradle
 dependencies {
-    implementation 'co.pisano:feedback:1.3.31'
+    implementation 'co.pisano:feedback:1.3.32'
 }
 ```
 
