@@ -9,17 +9,19 @@ Pisano Feedback Android SDK helps you collect surveys and user feedback in your 
 - **Module:** `app/` — single sample application (XML layouts + Kotlin).
 - The sample UI (buttons, forms) is **native**; the survey UI is **rendered by the SDK** after `PisanoSDK.show(...)` (your app does not build survey screens itself).
 
-SDK artifact used by this sample: **`co.pisano:feedback`** (version **1.3.32**, Maven Central)
+SDK artifact used by this sample: **`co.pisano:feedback`** (version **1.3.33**, Maven Central)
 
-Details: [RELEASE_NOTES_1.3.32.md](./RELEASE_NOTES_1.3.32.md)
+Details: [RELEASE_NOTES_1.3.33.md](./RELEASE_NOTES_1.3.33.md)
 
-## Pisano Feedback Android SDK — v1.3.32 Release Notes
+## Pisano Feedback Android SDK — v1.3.33 Release Notes (MT-38)
 
-### What's new in v1.3.32
+### What's new in v1.3.33
 
-- **Security:** Removed `usesCleartextTraffic="true"` from the SDK manifest (host apps are no longer forced to allow HTTP via manifest merge).
-- **Includes:** All **1.3.31** changes (MT-41 bottom sheet, `dismissOnDrag`, Samsung scrim fix).
-- **Sample alignment:** This repository depends on **`co.pisano:feedback:1.3.32`**.
+- **`disable_zoom`:** Channel-configurable WebView pinch zoom via SDK detail API (panel per channel; no app API change).
+- **Keyboard + viewport:** Improved bottom sheet keyboard handling; survey scroll stays inside web widget.
+- **Bottom sheet scrim:** Host app background visible behind sheet (no solid black overlay on Samsung and similar devices).
+- **Includes:** All **1.3.32** / **1.3.31** changes (cleartext manifest fix, MT-41 `dismissOnDrag`, bottom sheet behaviour).
+- **Sample alignment:** This repository depends on **`co.pisano:feedback:1.3.33`**.
 
 ## MT-41 — Bottom sheet `dismissOnDrag` (sample UI)
 
@@ -34,7 +36,7 @@ The form screen includes **View Mode** (Default / Bottom Sheet) and **Dismiss on
 
 - **`dismissOnDrag` parameter** on `PisanoSDK.show()` (optional, default `false`).
 - **Bottom sheet default behaviour** aligned with iOS: half-height open, header-only drag, no partial collapse below half, Samsung scrim fix.
-- **Sample alignment:** This repository depends on **`co.pisano:feedback:1.3.32`** and exposes Off/On toggle in `MainActivity`.
+- **Sample alignment:** This repository depends on **`co.pisano:feedback:1.3.33`** and exposes Off/On toggle in `MainActivity`.
 
 ### What's new in v1.3.30
 
@@ -128,7 +130,7 @@ When the survey is configured to show only once (or within a delay window), the 
 
 ```gradle
 dependencies {
-    implementation 'co.pisano:feedback:1.3.32'
+    implementation 'co.pisano:feedback:1.3.33'
 }
 ```
 
@@ -223,7 +225,7 @@ allprojects {
 
 ```gradle
 dependencies {
-    implementation 'co.pisano:feedback:1.3.32'
+    implementation 'co.pisano:feedback:1.3.33'
 }
 ```
 
