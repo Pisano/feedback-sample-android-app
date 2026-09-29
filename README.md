@@ -9,19 +9,9 @@ Pisano Feedback Android SDK helps you collect surveys and user feedback in your 
 - **Module:** `app/` — single sample application (XML layouts + Kotlin).
 - The sample UI (buttons, forms) is **native**; the survey UI is **rendered by the SDK** after `PisanoSDK.show(...)` (your app does not build survey screens itself).
 
-SDK artifact used by this sample: **`co.pisano:feedback`** (version **1.3.33**, Maven Central)
+SDK artifact used by this sample: **`co.pisano:feedback`** (version **1.4.1**, Maven Central)
 
-Details: [RELEASE_NOTES_1.3.33.md](./RELEASE_NOTES_1.3.33.md)
-
-## Pisano Feedback Android SDK — v1.3.33 Release Notes (MT-38)
-
-### What's new in v1.3.33
-
-- **`disable_zoom`:** Channel-configurable WebView pinch zoom via SDK detail API (panel per channel; no app API change).
-- **Keyboard + viewport:** Improved bottom sheet keyboard handling; survey scroll stays inside web widget.
-- **Bottom sheet scrim:** Host app background visible behind sheet (no solid black overlay on Samsung and similar devices).
-- **Includes:** All **1.3.32** / **1.3.31** changes (cleartext manifest fix, MT-41 `dismissOnDrag`, bottom sheet behaviour).
-- **Sample alignment:** This repository depends on **`co.pisano:feedback:1.3.33`**.
+Details: [RELEASE_NOTES_1.4.1.md](./RELEASE_NOTES_1.4.1.md)
 
 ## MT-41 — Bottom sheet `dismissOnDrag` (sample UI)
 
@@ -30,142 +20,8 @@ The form screen includes **View Mode** (Default / Bottom Sheet) and **Dismiss on
 - **Off (default):** Header drag resizes the sheet; WebView scroll does not move the sheet; drag-to-dismiss disabled.
 - **On:** Swipe down from the header to dismiss.
 
-## Pisano Feedback Android SDK — v1.3.31 Release Notes (included in 1.3.32)
-
-### What's new in v1.3.31 (MT-41)
-
-- **`dismissOnDrag` parameter** on `PisanoSDK.show()` (optional, default `false`).
-- **Bottom sheet default behaviour** aligned with iOS: half-height open, header-only drag, no partial collapse below half, Samsung scrim fix.
-- **Sample alignment:** This repository depends on **`co.pisano:feedback:1.3.33`** and exposes Off/On toggle in `MainActivity`.
-
-### What's new in v1.3.30
-
-- **Sample alignment:** Previously pinned to **`co.pisano:feedback:1.3.30`** (superseded by **1.3.31** — see MT-41 above).
-- **For integrators on 1.3.28 / 1.3.29:** Treat **1.3.30** as a **recommended upgrade** on the same public API surface: **`setCode(...)` required** in `PisanoSDKManager.Builder`, optional per-call `code` on `show` / `healthCheck`, **no `flowId`**. Bump the dependency and rebuild; no API migration is needed if you are already on the post–1.3.27 model.
-
-Framework-level details: [Pisano/feedback-android](https://github.com/Pisano/feedback-android) releases.
-
----
-
-### Breaking changes (only when migrating from **≤ 1.3.27**)
-
-These changes landed in **1.3.28+** and still apply in **1.3.31**.
-
-#### `setCode(...)` is required in SDK initialization
-
-You must call `.setCode("YOUR_CODE")` on `PisanoSDKManager.Builder`. This is your survey/channel **code** from the Pisano panel.
-
-```kotlin
-val manager = PisanoSDKManager.Builder(context)
-    .setApplicationId("YOUR_APP_ID")
-    .setAccessKey("YOUR_ACCESS_KEY")
-    .setCode("YOUR_CODE")   // required
-    .setApiUrl("https://api.pisano.co")
-    .setFeedbackUrl("https://web.pisano.co/web_feedback")
-    .setEventUrl("https://track.pisano.co/track")   // optional
-    .setDebug(BuildConfig.DEBUG)                    // optional, recommended
-    .build()
-
-PisanoSDK.init(manager)
-```
-
-#### `flowId` removed
-
-All APIs use **`code`** instead of **`flowId`**. Update every `show()`, `healthCheck()`, and related usage accordingly.
-
----
-
-### API reference (v1.3.31) — `code` on `show` / `healthCheck`
-
-**Single rule:** The value you pass to **`.setCode(...)`** on the **Builder** (before `PisanoSDK.init(manager)`) is the **default** survey/channel for the SDK session. On **`PisanoSDK.show(...)`** and **`PisanoSDK.healthCheck(...)`**, if you **omit `code` or pass `null`**, the SDK **always** uses that **init** code. A **non-null** `code` argument **overrides the init code for that call only**; the next call without `code` uses the init default again.
-
-#### `PisanoSDK.show(...)`
-
-- **`code` is optional.** Omitted / `null` → use **`.setCode(...)` from init**.
-- Non-null `code` → override **for this `show` only**.
-
-#### `PisanoSDK.healthCheck(...)`
-
-- Same rule: **omit or `null` → init `code`**; non-null → **override for this check only**.
-
----
-
-### New features / behaviour notes
-
-#### Per-call `code` override
-
-Useful when one app displays **multiple** surveys from different channels.
-
-```kotlin
-// Uses init (Builder) code (no per-call override)
-PisanoSDK.show()
-
-// Override for this call only (example)
-PisanoSDK.show(
-    viewMode = ViewMode.BOTTOM_SHEET,
-    language = "tr",
-    code = "ANOTHER_SURVEY_CODE"
-)
-```
-
-#### Display rate limiting (`display_rate`)
-
-The backend may return `display_rate` (0–100). When this call is skipped, the SDK does not open the UI and emits **`PisanoActions.DISPLAY_RATE_LIMITED`** via your `ActionListener`.
-
-#### Display once (`display_once`)
-
-When the survey is configured to show only once (or within a delay window), the SDK may emit **`PisanoActions.DISPLAY_ONCE`** and skip opening the widget again.
-
-#### Debug mode
-
-```kotlin
-.setDebug(BuildConfig.DEBUG)   // verbose logs in debug builds
-```
-
----
-
-### Migration guide
-
-#### 1) Update dependency
-
-```gradle
-dependencies {
-    implementation 'co.pisano:feedback:1.3.33'
-}
-```
-
-#### 2) Add `setCode(...)` to the Builder (required)
-
-- Before (≤ 1.3.27): `setCode` was not required.
-- After (1.3.28+): **`setCode` is required**.
-
-#### 3) Replace `flowId` with `code` in `show` / `healthCheck`
-
-```kotlin
-// Before (1.3.27)
-// PisanoSDK.show(..., flowId = "SOME_FLOW")
-
-// After — explicit survey code for this call
-PisanoSDK.show(viewMode = ViewMode.DEFAULT, code = "SOME_CODE")
-
-// Or use the default from init (omit `code` entirely)
-PisanoSDK.show()
-```
-
----
-
-### Summary
-
-| API | `code` | If you omit `code` (or pass `null`) |
-|-----|--------|-------------------------------------|
-| `PisanoSDKManager.Builder.setCode(...)` | **Required** | N/A — init cannot run without it |
-| `PisanoSDK.show(..., code = ...)` | Optional | **Always** uses the **code from `setCode` / `init`** |
-| `PisanoSDK.healthCheck(..., code = ...)` | Optional | **Always** uses the **code from `setCode` / `init`** |
-| `PisanoSDK.track(...)` | N/A | Uses current SDK context |
-
 ## 📋 Table of Contents
 
-- [Pisano Feedback Android SDK — v1.3.31 Release Notes](#pisano-feedback-android-sdk--v1330-release-notes)
 - [Features](#features)
 - [Requirements](#requirements)
 - [Installation](#installation)
@@ -195,12 +51,14 @@ PisanoSDK.show()
 - ✅ **Custom Title**: Customizable title support
 - ✅ **Code-based configuration**: Single source in `init()` (applicationId, accessKey, code, URLs); all API calls use this state
 - ✅ **Display rate throttling**: Backend can send `display_rate` (0–100); SDK shows or skips deterministically and reports `DISPLAY_RATE_LIMITED` when skipped
+- ✅ **Per-call `show()` callback**: Optional `completion` receives the result of that `show()` call only
+- ✅ **Loading indicator**: Full screen mode shows a loading indicator while the survey page loads
 
 ## 📱 Requirements
 
 From this sample project (`app/build.gradle` and root `build.gradle`):
 
-- **minSdk**: 21
+- **minSdk**: 21 (SDK 1.4.1 requires `minSdkVersion` 21 or higher)
 - **compileSdk / targetSdk**: 34
 - **Java**: 17 (toolchain / `compileOptions`)
 - **Android Gradle Plugin**: 8.7.3
@@ -225,7 +83,7 @@ allprojects {
 
 ```gradle
 dependencies {
-    implementation 'co.pisano:feedback:1.3.33'
+    implementation 'co.pisano:feedback:1.4.1'
 }
 ```
 
@@ -514,6 +372,8 @@ Displays the feedback widget.
 - `payload: HashMap<String, String>?` - Extra data (optional)
 - `pisanoCustomer: PisanoCustomer?` - User information (optional)
 - `code: String?` - **Optional.** Widget code for this call. If **not** provided, the SDK uses the **code from `init()` (boot)**. If provided, this code is used for this request (e.g. to show a different widget than the one configured at init).
+- `dismissOnDrag: Boolean` - Bottom sheet only. When `true`, a swipe down from the header dismisses the sheet (optional, default `false`)
+- `completion: ((PisanoActions) -> Unit)?` - **Optional (1.4.1+).** Receives the result of this call only, for example `OPENED`, `CLOSED`, `SEND_FEEDBACK` or `DISPLAY_RATE_LIMITED`. The global `setCloseStatusCallback` listener still receives the same events.
 
 **User Information Fields:**
 - `name: String?` - User name
@@ -556,6 +416,24 @@ PisanoSDK.show(viewMode = ViewMode.BOTTOM_SHEET, language = "en")
 
 // Equivalent intent — explicit null where you name other parameters
 PisanoSDK.show(viewMode = ViewMode.BOTTOM_SHEET, language = "en", code = null)
+```
+
+**Per-call result callback (1.4.1+):**  
+Pass `completion` to get the result of this `show()` call only. The global `setCloseStatusCallback` listener still receives the same events.
+
+```kotlin
+PisanoSDK.show(
+    viewMode = ViewMode.BOTTOM_SHEET,
+    completion = { action ->
+        when (action) {
+            PisanoActions.OPENED -> Log.d("Pisano", "Survey opened")
+            PisanoActions.SEND_FEEDBACK -> Log.d("Pisano", "Feedback sent")
+            PisanoActions.CLOSED -> Log.d("Pisano", "Survey closed")
+            PisanoActions.DISPLAY_RATE_LIMITED -> Log.d("Pisano", "Skipped by display_rate")
+            else -> {}
+        }
+    }
+)
 ```
 
 **Overriding code for a single call:**  
@@ -755,6 +633,7 @@ val manager = PisanoSDKManager.Builder(context)
                     Log.d("Pisano", "Feedback sent")
                 }
                 PisanoActions.OUTSIDE -> {
+                    // 1.4.1+: sent only for taps outside the bottom sheet
                     Log.d("Pisano", "Closed by clicking outside")
                 }
                 PisanoActions.DISPLAY_ONCE -> {
@@ -904,12 +783,14 @@ Set `sdk.dir=...` in `local.properties`, or export `ANDROID_HOME` / `ANDROID_SDK
 
 ### Runtime crash: `NoClassDefFoundError` (Retrofit / Gson)
 
-If you integrate the SDK into your own app and see errors like:
+Since **1.4.1**, the Maven POM lists the SDK's dependencies (Retrofit, Gson, AndroidX, Material), so Gradle adds them to your app. You no longer need to declare them yourself.
+
+If you use **1.3.x or earlier** and see errors like:
 
 - `retrofit2/Retrofit$Builder`
 - `com/google/gson/GsonBuilder`
 
-Ensure your app includes the required runtime deps (this sample does):
+Add the required runtime deps to your app:
 
 ```gradle
 implementation 'com.google.code.gson:gson:2.10.1'
@@ -975,6 +856,18 @@ When using Java, use `PisanoSDK.INSTANCE`:
 ```java
 PisanoSDK.INSTANCE.show(...)
 ```
+
+### Bottom sheet closes (or does not close) on outside tap
+
+Since **1.4.1**, taps inside the bottom sheet no longer send `OUTSIDE`. A tap outside the sheet closes it only when `close_on_outside_click` is enabled for the channel in the Pisano panel.
+
+### WebView remote debugging
+
+Since **1.4.1**, the SDK enables WebView remote debugging (`chrome://inspect`) only when `.setDebug(true)` is set and the app is debuggable. This setting applies to the whole app.
+
+### `android:allowBackup`
+
+Since **1.4.1**, the SDK no longer sets `android:allowBackup="true"` in your app's manifest. Your app's own value applies.
 
 ### Bottom sheet not working
 

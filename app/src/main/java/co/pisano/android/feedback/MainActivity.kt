@@ -199,6 +199,9 @@ class MainActivity : AppCompatActivity() {
                 pisanoCustomer = customer,
                 code = codeOverride,
                 dismissOnDrag = dismissOnDrag,
+                completion = { action ->
+                    AppLogger.d("show completion: $action")
+                },
             )
         }
     }
