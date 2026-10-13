@@ -9,9 +9,9 @@ Pisano Feedback Android SDK helps you collect surveys and user feedback in your 
 - **Module:** `app/` — single sample application (XML layouts + Kotlin).
 - The sample UI (buttons, forms) is **native**; the survey UI is **rendered by the SDK** after `PisanoSDK.show(...)` (your app does not build survey screens itself).
 
-SDK artifact used by this sample: **`co.pisano:feedback`** (version **1.4.1**, Maven Central)
+SDK artifact used by this sample: **`co.pisano:feedback`** (version **1.4.3**, Maven Central)
 
-Details: [RELEASE_NOTES_1.4.1.md](./RELEASE_NOTES_1.4.1.md)
+Details: [RELEASE_NOTES_1.4.3.md](./RELEASE_NOTES_1.4.3.md)
 
 ## MT-41 — Bottom sheet `dismissOnDrag` (sample UI)
 
@@ -58,7 +58,7 @@ The form screen includes **View Mode** (Default / Bottom Sheet) and **Dismiss on
 
 From this sample project (`app/build.gradle` and root `build.gradle`):
 
-- **minSdk**: 21 (SDK 1.4.1 requires `minSdkVersion` 21 or higher)
+- **minSdk**: 21 (SDK 1.4.3 requires `minSdkVersion` 21 or higher)
 - **compileSdk / targetSdk**: 34
 - **Java**: 17 (toolchain / `compileOptions`)
 - **Android Gradle Plugin**: 8.7.3
@@ -83,7 +83,7 @@ allprojects {
 
 ```gradle
 dependencies {
-    implementation 'co.pisano:feedback:1.4.1'
+    implementation 'co.pisano:feedback:1.4.3'
 }
 ```
 
@@ -801,7 +801,7 @@ implementation 'com.squareup.okhttp3:okhttp:4.9.3'
 
 ### Display once (`display_once`)
 
-The backend can send `display_once` (boolean) and optionally `display_once_delay_period`. The SDK stores "shown" state locally and, if a delay period is set, will not show again until that period has passed. **`display_once_delay_period` is in hours** (e.g. `24` = once per day). When skipped, the callback receives `PisanoActions.DISPLAY_ONCE`.
+The backend can send `display_once` (boolean) and optionally `display_once_delay_period`. The SDK stores "shown" state locally and, if a delay period is set, will not show again until that period has passed. **`display_once_delay_period` is in minutes** (e.g. `1440` = once per day; it was in hours before 1.4.3). When skipped, the callback receives `PisanoActions.DISPLAY_ONCE`.
 
 ### Why is `code` required in init?
 
