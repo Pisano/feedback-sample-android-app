@@ -2,8 +2,6 @@ package co.pisano.android.feedback.util
 
 import android.content.Context
 import co.pisano.android.feedback.BuildConfig
-import co.pisano.feedback.data.helper.ActionListener
-import co.pisano.feedback.data.helper.PisanoActions
 import co.pisano.feedback.managers.PisanoSDK
 import co.pisano.feedback.managers.PisanoSDKManager
 
@@ -39,16 +37,13 @@ object PisanoSdkBootstrapper {
                     }
                 }
                 .setDebug(BuildConfig.DEBUG)
-                .setCloseStatusCallback(object : ActionListener {
-                    override fun action(action: PisanoActions) {
-                        PisanoSdkState.setLastAction(action)
-                        AppLogger.d("SDK action: $action")
-                    }
-                })
                 .build()
 
             try {
-                PisanoSDK.init(manager)
+                PisanoSDK.init(manager) { status ->
+                    PisanoSdkState.setLastAction(status)
+                    AppLogger.d("SDK init result: $status")
+                }
                 PisanoSdkState.setInitialized(true)
                 PisanoSdkState.setError(null)
                 initialized = true

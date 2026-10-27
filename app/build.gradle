@@ -105,7 +105,7 @@ dependencies {
     implementation 'androidx.activity:activity-ktx:1.3.1'
 
     // feedback sdk (latest stable)
-    implementation 'co.pisano:feedback:1.4.3'
+    implementation 'co.pisano:feedback:2.0.0-LOCAL'
 
     // test
     testImplementation 'junit:junit:4.13.2'

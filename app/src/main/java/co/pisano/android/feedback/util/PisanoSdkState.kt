@@ -2,14 +2,14 @@ package co.pisano.android.feedback.util
 
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
-import co.pisano.feedback.data.helper.PisanoActions
+import co.pisano.feedback.data.helper.CloseStatus
 
 object PisanoSdkState {
     private val _isInitialized = MutableLiveData(false)
     val isInitialized: LiveData<Boolean> = _isInitialized
 
-    private val _lastAction = MutableLiveData<PisanoActions?>(null)
-    val lastAction: LiveData<PisanoActions?> = _lastAction
+    private val _lastAction = MutableLiveData<CloseStatus?>(null)
+    val lastAction: LiveData<CloseStatus?> = _lastAction
 
     private val _lastError = MutableLiveData<SdkError?>(null)
     val lastError: LiveData<SdkError?> = _lastError
@@ -18,7 +18,7 @@ object PisanoSdkState {
         _isInitialized.value = value
     }
 
-    fun setLastAction(action: PisanoActions?) {
+    fun setLastAction(action: CloseStatus?) {
         _lastAction.value = action
     }
 
