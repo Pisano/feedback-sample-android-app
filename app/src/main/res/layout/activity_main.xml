@@ -324,6 +324,23 @@
                         android:textColor="#777777"
                         android:visibility="gone" />
 
+                    <TextView
+                        android:id="@+id/txtLastEvent"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:textSize="12sp"
+                        android:textColor="#777777"
+                        android:visibility="gone" />
+
+                    <com.google.android.material.switchmaterial.SwitchMaterial
+                        android:id="@+id/swAutomaticStoreReview"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="16dp"
+                        android:checked="true"
+                        android:text="@string/automatic_store_review" />
+
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/btnGetFeedback"
                         style="@style/Widget.MaterialComponents.Button"
