@@ -40,7 +40,7 @@ val subscription = PisanoSDK.subscribe { event -> /* OPENED, CLOSED, ... */ }
   | --- | --- |
   | `OPENED` | `PisanoEventType.OPENED` |
   | `REDIRECT_TO_STORE` | `PisanoEventType.REDIRECTED_TO_STORE` |
-  | `SHOW_SUCCESS` | `PisanoEventType.OPENED` |
+  | `SHOW_SUCCESS` | None. The SDK never sent it, so remove it from your code. |
 
 - **`setCloseStatusCallback` and `ActionListener` are removed:** The global listener is gone. Use the `init` completion, the `show()` completion and `PisanoSDK.subscribe`.
 - **Every `show()` ends with one result:** The `completion` is always called once. If no survey is shown and no other value fits, for example when the SDK is not initialized or a request fails, the result is the new value `CloseStatus.NONE`. Before, the `completion` was not called in some of these cases.
@@ -52,9 +52,39 @@ val subscription = PisanoSDK.subscribe { event -> /* OPENED, CLOSED, ... */ }
 - **Init completion:** `PisanoSDK.init(manager) { status -> }` reports `INIT_SUCCESS` or `INIT_FAILED`.
 - **`PisanoSDK.automaticStoreReview`:** The default is `true`. Set it to `false` to stop the SDK from asking for the Google Play review prompt and run your own flow on the `REDIRECTED_TO_STORE` event.
 
+### Examples
+
+Know when a survey opens and how it closes:
+
+```kotlin
+val subscription = PisanoSDK.subscribe { event ->
+    when (event.type) {
+        PisanoEventType.OPENED -> pauseVideo()
+        PisanoEventType.CLOSED -> {
+            resumeVideo()
+            if (event.closeReason == PisanoCloseReason.BACK) { /* ... */ }
+        }
+        else -> {}
+    }
+}
+
+// In onDestroy:
+subscription.cancel()
+```
+
+Run your own store review flow:
+
+```kotlin
+PisanoSDK.automaticStoreReview = false
+
+PisanoSDK.subscribe { event ->
+    if (event.type == PisanoEventType.REDIRECTED_TO_STORE && !event.handledBySDK) {
+        // You can ask for the review yourself.
+    }
+}
+```
+
 ### Bug fixes
 
 - **Close right after submit:** If the customer closes the survey after submitting, `show()` reports `SEND_FEEDBACK`.
 - **Back key:** The bottom sheet closes only on the back key and reports `BACK`.
-
-###
