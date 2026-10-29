@@ -368,7 +368,7 @@ Every `show()` call ends with one `CloseStatus`. It says how the call ended. Wha
 
 | Value | Meaning |
 |---|---|
-| `CLOSED` | The survey was closed without a submit. |
+| `CLOSED` | The survey was closed without a submit: close button, back, drag, a tap outside the bottom sheet, or your app or the system taking the widget away. The `CLOSED` event's `closeReason` tells which. |
 | `SEND_FEEDBACK` | The survey was submitted, however the widget closed afterwards. |
 | `OUTSIDE` | A tap outside the bottom sheet closed it. |
 | `DISPLAY_ONCE` | Not shown: the customer saw the survey before. |
