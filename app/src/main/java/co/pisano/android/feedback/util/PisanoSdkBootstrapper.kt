@@ -40,9 +40,8 @@ object PisanoSdkBootstrapper {
                 .build()
 
             try {
-                PisanoSDK.init(manager) { status ->
-                    PisanoSdkState.setLastAction(status)
-                    AppLogger.d("SDK init result: $status")
+                PisanoSDK.init(manager) { succeeded ->
+                    AppLogger.d("SDK init result: $succeeded")
                 }
                 PisanoSdkState.setInitialized(true)
                 PisanoSdkState.setError(null)

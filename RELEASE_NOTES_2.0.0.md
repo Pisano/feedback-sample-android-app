@@ -14,6 +14,7 @@ implementation 'co.pisano:feedback:2.0.0'
 2. Remove `setCloseStatusCallback` and `ActionListener`. Use the `init` completion, the `show()` completion and `PisanoSDK.subscribe` instead.
 3. Handle the new `CloseStatus.NONE` value.
 4. Handle `CloseStatus.OUTSIDE` as `CLOSED`. Read the `closeReason` of the `CLOSED` event if you need the outside tap.
+5. Take a `Boolean` in the `init` completion instead of `CloseStatus.INIT_SUCCESS` / `INIT_FAILED`.
 
 ```kotlin
 // 1.x
@@ -26,7 +27,7 @@ PisanoSDK.init(manager)
 
 // 2.0.0
 val manager = PisanoSDKManager.Builder(context).build()
-PisanoSDK.init(manager) { status -> /* INIT_SUCCESS or INIT_FAILED */ }
+PisanoSDK.init(manager) { succeeded -> /* true when the SDK booted */ }
 
 val subscription = PisanoSDK.subscribe { event -> /* OPENED, CLOSED, ... */ }
 // Call subscription.cancel() when you no longer need the events.
@@ -34,7 +35,7 @@ val subscription = PisanoSDK.subscribe { event -> /* OPENED, CLOSED, ... */ }
 
 ### Breaking changes
 
-- **`PisanoActions` is now `CloseStatus`:** Update the import to `co.pisano.feedback.data.helper.CloseStatus`. All other values keep their names.
+- **`PisanoActions` is now `CloseStatus`:** Update the import to `co.pisano.feedback.data.helper.CloseStatus`. All other values keep their names, except the ones removed below.
 - **Four values are removed:** `CloseStatus` now reports only how a call ended. What happens while the survey is open is an event that you receive with `PisanoSDK.subscribe`.
 
   | Removed value | Replacement |
@@ -44,6 +45,7 @@ val subscription = PisanoSDK.subscribe { event -> /* OPENED, CLOSED, ... */ }
   | `SHOW_SUCCESS` | None. The SDK never sent it, so remove it from your code. |
   | `OUTSIDE` | An outside tap ends `show()` with `CLOSED`. The `CLOSED` event's `closeReason` is `PisanoCloseReason.OUTSIDE`. |
 
+- **`init` reports a `Boolean`:** The `completion` of `PisanoSDK.init` is `(Boolean) -> Unit`: `true` when the SDK booted, `false` when it failed. `CloseStatus.INIT_SUCCESS` and `INIT_FAILED` are removed, so `CloseStatus` now holds only `show()` results, like `PisanoSDK.healthCheck` already reported a `Boolean`.
 - **`setCloseStatusCallback` and `ActionListener` are removed:** The global listener is gone. Use the `init` completion, the `show()` completion and `PisanoSDK.subscribe`.
 - **Every `show()` ends with one result:** The `completion` is always called once. If no survey is shown and no other value fits, for example when the SDK is not initialized or a request fails, the result is the new value `CloseStatus.NONE`. Before, the `completion` was not called in some of these cases.
 - **One survey at a time:** If a survey is open, another `show()` does not open a second one and ends with `NONE`.
@@ -51,7 +53,7 @@ val subscription = PisanoSDK.subscribe { event -> /* OPENED, CLOSED, ... */ }
 ### Features
 
 - **`PisanoSDK.subscribe`:** Receive `OPENED`, `FEEDBACK_SUBMITTED`, `REDIRECTED_TO_STORE` and `CLOSED` for the surveys that `show()` displays. `CLOSED` has a `closeReason`, for example `CLOSE_BUTTON`, `BACK`, `DRAG` or `OUTSIDE`. Call `cancel()` on the returned subscription when you no longer need the events.
-- **Init completion:** `PisanoSDK.init(manager) { status -> }` reports `INIT_SUCCESS` or `INIT_FAILED`.
+- **Init completion:** `PisanoSDK.init(manager) { succeeded -> }` reports a `Boolean`: `true` when the SDK booted, `false` when it failed.
 - **`PisanoSDK.automaticStoreReview`:** The default is `true`. Set it to `false` to stop the SDK from asking for the Google Play review prompt and run your own flow on the `REDIRECTED_TO_STORE` event.
 
 ### Examples
