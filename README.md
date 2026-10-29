@@ -140,7 +140,6 @@ You can initialize at app startup (recommended). Get the values from the Pisano 
 import android.app.Application
 import android.util.Log
 import com.example.app.BuildConfig   // replace with your application module’s BuildConfig
-import co.pisano.feedback.data.helper.CloseStatus
 import co.pisano.feedback.managers.PisanoSDK
 import co.pisano.feedback.managers.PisanoSDKManager
 
@@ -158,11 +157,11 @@ class MyApplication : Application() {
             .setDebug(BuildConfig.DEBUG)
             .build()
 
-        PisanoSDK.init(manager) { status ->
-            when (status) {
-                CloseStatus.INIT_SUCCESS -> Log.d("Pisano", "SDK initialized successfully")
-                CloseStatus.INIT_FAILED -> Log.e("Pisano", "SDK initialization failed")
-                else -> {}
+        PisanoSDK.init(manager) { succeeded ->
+            if (succeeded) {
+                Log.d("Pisano", "SDK initialized successfully")
+            } else {
+                Log.e("Pisano", "SDK initialization failed")
             }
         }
     }
@@ -175,7 +174,6 @@ class MyApplication : Application() {
 import android.app.Application;
 import android.util.Log;
 
-import co.pisano.feedback.data.helper.CloseStatus;
 import co.pisano.feedback.managers.PisanoSDK;
 import co.pisano.feedback.managers.PisanoSDKManager;
 import kotlin.Unit;
@@ -195,8 +193,8 @@ public class MyApplication extends Application {
             .setDebug(BuildConfig.DEBUG)              // optional, recommended
             .build();
 
-        PisanoSDK.INSTANCE.init(manager, status -> {
-            Log.d("Pisano", "init status=" + status);
+        PisanoSDK.INSTANCE.init(manager, succeeded -> {
+            Log.d("Pisano", "init succeeded=" + succeeded);
             return Unit.INSTANCE;
         });
     }
@@ -270,7 +268,7 @@ Initializes the SDK. This method must be called either at application startup (u
   - `feedbackUrl: String` - Feedback widget URL
   - `eventUrl: String?` - Event tracking URL (optional; required if you use `PisanoSDK.track`)
   - `isDebug: Boolean` - When `true`, SDK logs (e.g. display_rate skip, fetch success/fail) are printed to Logcat with tag `PISANO_SDK` (optional, default `false`)
-- `completion: ((CloseStatus) -> Unit)?` - **Optional.** Called once on the main thread with `CloseStatus.INIT_SUCCESS` or `CloseStatus.INIT_FAILED`.
+- `completion: ((Boolean) -> Unit)?` - **Optional.** Called once on the main thread: `true` when the SDK booted, `false` when the request failed.
 
 **Example:**
 
@@ -285,12 +283,8 @@ val manager = PisanoSDKManager.Builder(context)
     .setDebug(true)
     .build()
 
-PisanoSDK.init(manager) { status ->
-    when (status) {
-        CloseStatus.INIT_SUCCESS -> println("SDK initialized successfully")
-        CloseStatus.INIT_FAILED -> println("SDK initialization failed")
-        else -> {}
-    }
+PisanoSDK.init(manager) { succeeded ->
+    println(if (succeeded) "SDK initialized successfully" else "SDK initialization failed")
 }
 ```
 
@@ -377,8 +371,6 @@ Every `show()` call ends with one `CloseStatus`. It says how the call ended. Wha
 | `CHANNEL_PASSIVE` | Not shown: the survey is passive. |
 | `DISPLAY_RATE_LIMITED` | Not shown: skipped by `display_rate`. |
 | `NONE` | No survey was shown and no other value fits, for example the SDK is not initialized or a request failed. |
-
-`INIT_SUCCESS` and `INIT_FAILED` are the results of `PisanoSDK.init`.
 
 ### `PisanoSDK.track()`
 
