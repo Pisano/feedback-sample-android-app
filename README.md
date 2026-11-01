@@ -268,7 +268,9 @@ Initializes the SDK. This method must be called either at application startup (u
   - `feedbackUrl: String` - Feedback widget URL
   - `eventUrl: String?` - Event tracking URL (optional; required if you use `PisanoSDK.track`)
   - `isDebug: Boolean` - When `true`, SDK logs (e.g. display_rate skip, fetch success/fail) are printed to Logcat with tag `PISANO_SDK` (optional, default `false`)
-- `completion: ((Boolean) -> Unit)?` - **Optional.** Called once on the main thread: `true` when the SDK booted, `false` when the request failed.
+- `completion: ((Boolean) -> Unit)?` - **Optional.** Called once on the main thread: `true` when the SDK booted, `false` when the request failed or the task was cancelled.
+
+**Returns:** a [`PisanoTask`](#pisanotask-cancel-a-running-call).
 
 **Example:**
 
@@ -374,13 +376,16 @@ Every `show()` call ends with one `CloseStatus`. It says how the call ended. Wha
 
 ### `PisanoSDK.track()`
 
-Tracks user activities and automatically triggers the feedback widget if needed.
+Tracks a user activity by sending an event to the `eventUrl` that you set in `PisanoSDKManager.Builder`.
 
 **Parameters:**
 - `event: String` - Event name (required)
 - `payload: HashMap<String, String>?` - Event data (optional)
 - `pisanoCustomer: PisanoCustomer?` - User information (optional)
 - `languageCode: String?` - Language code (optional)
+- `completion: ((Boolean) -> Unit)?` - **Optional.** Called once on the main thread: `true` when the server accepted the event, `false` when it was not sent (the SDK is not initialized, there is no `eventUrl` or no network, the request failed) or the task was cancelled.
+
+**Returns:** a [`PisanoTask`](#pisanotask-cancel-a-running-call).
 
 **Example:**
 
@@ -404,9 +409,28 @@ PisanoSDK.track(
 )
 ```
 
+### `PisanoTask`: cancel a running call
+
+`init`, `healthCheck`, `show` and `track` return a `PisanoTask`. Keeping it is optional.
+
+- `cancel()` stops the call when it has not finished. The network requests are cancelled and the `completion` is called once, on the main thread, with the cancel result. A result that arrives later is dropped.
+- `isCancelled` tells whether `cancel()` stopped the call.
+
+| Call | Cancel result |
+| --- | --- |
+| `init`, `healthCheck`, `track` | `false` |
+| `show` | `CloseStatus.NONE` (the survey is not shown) |
+
+`cancel()` does nothing when the call has already finished. For `show`, it also does nothing once the survey is on screen; close the survey instead.
+
+```kotlin
+val task = PisanoSDK.show { status -> /* NONE when cancelled */ }
+task.cancel()
+```
+
 ### `PisanoSDK.clearAction()`
 
-Clears the SDK's local data (Shared Preferences). This is useful when logging out a user to ensure fresh state for the next user.
+Clears the SDK's local data (Shared Preferences) and cancels the calls that are still running, as `PisanoTask.cancel()` does. This is useful when logging out a user to ensure fresh state for the next user. A survey that is already on screen is not closed.
 
 **Example:**
 
@@ -423,7 +447,9 @@ Checks the SDK status. It is recommended to use this before displaying the widge
 - `pisanoCustomer: PisanoCustomer?` - User information (optional)
 - `payload: HashMap<String, String>?` - Extra data (optional)
 - `code: String?` - **Optional.** Widget code for this check. If **not** provided, the SDK uses the **code from `init()` (boot)**. If provided, this code is used for this request.
-- `isHealthCheckSuccessful: (Boolean) -> Unit` - Health check result (true: successful, false: failed)
+- `isHealthCheckSuccessful: (Boolean) -> Unit` - Health check result (true: successful, false: failed or cancelled). It is always called on the main thread, also when the check fails at once (for example when the SDK is not initialized).
+
+**Returns:** a [`PisanoTask`](#pisanotask-cancel-a-running-call).
 
 **Example (uses init code):**
 
