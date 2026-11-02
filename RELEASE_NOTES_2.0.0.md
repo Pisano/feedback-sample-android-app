@@ -101,6 +101,25 @@ PisanoSDK.subscribe { event ->
 }
 ```
 
+Cancel a call that is still running:
+
+```kotlin
+val task = PisanoSDK.show { status -> /* NONE when cancelled */ }
+task.cancel()
+```
+
+Reset the SDK when a user logs out. An open survey closes:
+
+```kotlin
+PisanoSDK.clear()
+```
+
+Change the timeout of the network requests, in seconds:
+
+```kotlin
+PisanoSDK.requestTimeout = 60
+```
+
 ### Bug fixes
 
 - **Close right after submit:** If the customer closes the survey after submitting, `show()` reports `SEND_FEEDBACK`.
