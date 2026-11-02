@@ -140,7 +140,7 @@ class MainActivity : AppCompatActivity() {
             txtPreflight.text = ""
             txtLastEvent.text = ""
             PisanoSdkState.setLastAction(null)
-            PisanoSDK.clearAction()
+            PisanoSDK.clear()
         }
 
         btnHealthCheck.setOnClickListener {
