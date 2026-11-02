@@ -6,8 +6,6 @@ implementation 'co.pisano:feedback:2.0.0'
 
 ## 2.0.0
 
-**Release date: to be set**
-
 ## Upgrading from 1.x
 
 2.0.0 has breaking changes. Do these steps in order. Your app compiles and behaves as before when all are done.
@@ -35,7 +33,7 @@ val subscription = PisanoSDK.subscribe { event -> /* OPENED, CLOSED, ... */ }
 
 ### 2. Rename `PisanoActions` to `CloseStatus`
 
-Change the import to `co.pisano.feedback.data.helper.CloseStatus`. The values keep their names, except the ones in step 3 and step 4.
+Change the import to `co.pisano.feedback.data.helper.CloseStatus`. The values keep their names, except the ones in step 3.
 
 ### 3. Replace the removed values
 
@@ -50,24 +48,6 @@ Change the import to `co.pisano.feedback.data.helper.CloseStatus`. The values ke
 ### 4. Handle the new value `CloseStatus.NONE`
 
 `NONE` means no survey was shown and no other value fits, for example the SDK is not initialized, a request failed or the survey page did not load. Every `show()` now ends with exactly one result. Before, the `completion` was not called in some of these cases.
-
-### 5. Recompile
-
-`init`, `healthCheck`, `show` and `track` now return a `PisanoTask` instead of `Unit`. Kotlin and Java source code that ignores the result compiles without a change. A library compiled against 1.x must be recompiled. `PisanoSDK.init(manager)` from Java still compiles.
-
-### 6. Only if you use these classes directly
-
-Most apps use `PisanoSDK` only and can skip this step.
-
-- `BottomSheetWebView` is not public anymore. Show surveys with `PisanoSDK.show`.
-- `PisanoSDKHelper` changed:
-
-  | 1.x | 2.0.0 |
-  | --- | --- |
-  | `getMobileSdkDetail()` | `getMobileSdkDetail(completion: ((Boolean) -> Unit)?)` |
-  | `fetchSdkDetail(codeOverride, triggerInitEvents, onComplete)` | `fetchSdkDetail(codeOverride, onComplete)` |
-  | `getAll(..., completion: ((PisanoActions) -> Unit)?)`, `getTrigger(..., completion: ((PisanoActions) -> Unit)?)` | The `completion` type is `((CloseStatus) -> Unit)?`. |
-  | `notifySurveyEvent(action)`, `clearCompletion()` | Removed. Use `PisanoSDK.subscribe` and the `show()` completion. |
 
 ### Behavior changes to check
 
