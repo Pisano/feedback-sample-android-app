@@ -366,7 +366,6 @@ Every `show()` call ends with one `CloseStatus`. It says how the call ended. Wha
 |---|---|
 | `CLOSED` | The survey was closed without a submit: close button, back, drag, a tap outside the bottom sheet, or your app or the system taking the widget away. The `CLOSED` event's `closeReason` tells which. |
 | `SEND_FEEDBACK` | The survey was submitted, however the widget closed afterwards. |
-| `OUTSIDE` | A tap outside the bottom sheet closed it. |
 | `DISPLAY_ONCE` | Not shown: the customer saw the survey before. |
 | `PREVENT_MULTIPLE_FEEDBACK` | Not shown: the customer already submitted a feedback in the given time period. |
 | `CHANNEL_QUOTA_EXCEEDED` | Not shown: the quota is exceeded. |
@@ -428,14 +427,26 @@ val task = PisanoSDK.show { status -> /* NONE when cancelled */ }
 task.cancel()
 ```
 
-### `PisanoSDK.clearAction()`
+`healthCheck` always reports on the main thread, also when it fails at once (for example when the SDK is not initialized): `false`.
 
-Clears the SDK's local data (Shared Preferences), cancels the calls that are still running and closes an open survey. Call it when a user logs out. The closed survey ends its `show()` with `NONE`, and its `CLOSED` event has the close reason `CLEAR`.
+### `PisanoSDK.clear()`
+
+`clearAction()` is a deprecated alias of `clear()`.
+
+Clears the SDK's local data (Shared Preferences), cancels the calls that are still running, as `PisanoTask.cancel()` does, and closes a survey that is open. This is useful when logging out a user to ensure fresh state for the next user. The closed survey ends its `show()` with `NONE`, even if the customer had submitted it, and the `CLOSED` event has the close reason `PisanoCloseReason.CLEAR`. A survey that did not open yet does not open. The SDK does not remember a closed survey as displayed, so `displayOnce` does not block it later.
 
 **Example:**
 
 ```kotlin
-PisanoSDK.clearAction()
+PisanoSDK.clear()
+```
+
+### `PisanoSDK.requestTimeout`
+
+Connect and read timeout of the network requests, in seconds. Default `30`. A change applies to the requests that start after it. A value below `1` sets the default again.
+
+```kotlin
+PisanoSDK.requestTimeout = 60
 ```
 
 ### `PisanoSDK.healthCheck()`
@@ -818,7 +829,7 @@ PisanoSDK.INSTANCE.show(...)
 
 ### Bottom sheet closes (or does not close) on outside tap
 
-Since **1.4.1**, taps inside the bottom sheet no longer send `OUTSIDE`. A tap outside the sheet closes it only when `close_on_outside_click` is enabled for the channel in the Pisano panel.
+A tap outside the sheet closes it only when `close_on_outside_click` is enabled for the channel in the Pisano panel. `show()` ends with `CLOSED`, and the `CLOSED` event's `closeReason` is `OUTSIDE`.
 
 ### WebView remote debugging
 
