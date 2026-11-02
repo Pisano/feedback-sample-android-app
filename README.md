@@ -14,7 +14,7 @@ SDK artifact used by this sample: **`co.pisano:feedback`** (version **2.0.0**, M
 
 Details: [RELEASE_NOTES_2.0.0.md](./RELEASE_NOTES_2.0.0.md)
 
-Migrating from 1.x? See the [migration steps](./RELEASE_NOTES_2.0.0.md#migrating-from-1x).
+Migrating from 1.x? See the [migration steps](./RELEASE_NOTES_2.0.0.md#upgrading-from-1x).
 
 ## ✨ Features
 

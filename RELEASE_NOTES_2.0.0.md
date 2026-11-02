@@ -8,13 +8,13 @@ implementation 'co.pisano:feedback:2.0.0'
 
 **Release date: to be set**
 
-### Migrating from 1.x
+## Upgrading from 1.x
 
-1. Rename `PisanoActions` to `CloseStatus`.
-2. Remove `setCloseStatusCallback` and `ActionListener`. Use the `init` completion, the `show()` completion and `PisanoSDK.subscribe` instead.
-3. Handle the new `CloseStatus.NONE` value.
-4. Handle `CloseStatus.OUTSIDE` as `CLOSED`. Read the `closeReason` of the `CLOSED` event if you need the outside tap.
-5. Take a `Boolean` in the `init` completion instead of `CloseStatus.INIT_SUCCESS` / `INIT_FAILED`.
+2.0.0 has breaking changes. Do these steps in order. Your app compiles and behaves as before when all are done.
+
+### 1. Replace the global listener
+
+Remove `setCloseStatusCallback` and `ActionListener`. Take the result of each call in its own completion. Take the events of the open survey from `PisanoSDK.subscribe`.
 
 ```kotlin
 // 1.x
@@ -33,43 +33,59 @@ val subscription = PisanoSDK.subscribe { event -> /* OPENED, CLOSED, ... */ }
 // Call subscription.cancel() when you no longer need the events.
 ```
 
-### Breaking changes
+### 2. Rename `PisanoActions` to `CloseStatus`
 
-- **`PisanoActions` is now `CloseStatus`:** Update the import to `co.pisano.feedback.data.helper.CloseStatus`. All other values keep their names, except the ones removed below.
-- **Four values are removed:** `CloseStatus` now reports only how a call ended. What happens while the survey is open is an event that you receive with `PisanoSDK.subscribe`.
+Change the import to `co.pisano.feedback.data.helper.CloseStatus`. The values keep their names, except the ones in step 3 and step 4.
 
-  | Removed value | Replacement |
-  | --- | --- |
-  | `OPENED` | `PisanoEventType.OPENED` |
-  | `REDIRECT_TO_STORE` | `PisanoEventType.REDIRECTED_TO_STORE` |
-  | `SHOW_SUCCESS` | None. The SDK never sent it, so remove it from your code. |
-  | `OUTSIDE` | An outside tap ends `show()` with `CLOSED`. The `CLOSED` event's `closeReason` is `PisanoCloseReason.OUTSIDE`. |
+### 3. Replace the removed values
 
-- **`init` reports a `Boolean`:** The `completion` of `PisanoSDK.init` is `(Boolean) -> Unit`: `true` when the SDK booted, `false` when it failed. `CloseStatus.INIT_SUCCESS` and `INIT_FAILED` are removed, so `CloseStatus` now holds only `show()` results, like `PisanoSDK.healthCheck` already reported a `Boolean`.
-- **`setCloseStatusCallback` and `ActionListener` are removed:** The global listener is gone. Use the `init` completion, the `show()` completion and `PisanoSDK.subscribe`.
-- **Every `show()` ends with one result:** The `completion` is always called once. If no survey is shown and no other value fits, for example when the SDK is not initialized or a request fails, the result is the new value `CloseStatus.NONE`. Before, the `completion` was not called in some of these cases.
-- **`init`, `healthCheck`, `show` and `track` return a `PisanoTask`:** They returned `Unit`. Kotlin and Java source code that ignores the result still compiles. A library compiled against 1.x must be recompiled.
-- **`track` has a `completion`:** `PisanoSDK.track(..., completion: ((Boolean) -> Unit)? = null)` reports `true` when the server accepted the event and `false` when it was not sent or the task was cancelled. Before, `track` reported nothing.
-- **`healthCheck` always reports on the main thread:** It was sometimes called back at once on the calling thread, for example when there was no network. When the SDK is not initialized it now reports `false` instead of staying silent.
-- **`PisanoSDKHelper` public functions changed:** Most apps use `PisanoSDK` only, so this affects you only if you call the helper directly.
+| 1.x value | 2.0.0 |
+| --- | --- |
+| `OPENED` | Event `PisanoEventType.OPENED` |
+| `REDIRECT_TO_STORE` | Event `PisanoEventType.REDIRECTED_TO_STORE` |
+| `OUTSIDE` | `show()` ends with `CLOSED`. The `CLOSED` event's `closeReason` is `PisanoCloseReason.OUTSIDE`. |
+| `SHOW_SUCCESS` | Remove it. The SDK never sent it. |
+| `INIT_SUCCESS`, `INIT_FAILED` | The `init` completion gets a `Boolean`: `true` when the SDK booted, `false` when it failed. |
+
+### 4. Handle the new value `CloseStatus.NONE`
+
+`NONE` means no survey was shown and no other value fits, for example the SDK is not initialized, a request failed or the survey page did not load. Every `show()` now ends with exactly one result. Before, the `completion` was not called in some of these cases.
+
+### 5. Recompile
+
+`init`, `healthCheck`, `show` and `track` now return a `PisanoTask` instead of `Unit`. Kotlin and Java source code that ignores the result compiles without a change. A library compiled against 1.x must be recompiled. `PisanoSDK.init(manager)` from Java still compiles.
+
+### 6. Only if you use these classes directly
+
+Most apps use `PisanoSDK` only and can skip this step.
+
+- `BottomSheetWebView` is not public anymore. Show surveys with `PisanoSDK.show`.
+- `PisanoSDKHelper` changed:
 
   | 1.x | 2.0.0 |
   | --- | --- |
   | `getMobileSdkDetail()` | `getMobileSdkDetail(completion: ((Boolean) -> Unit)?)` |
-  | `fetchSdkDetail(codeOverride, triggerInitEvents, onComplete)` | `fetchSdkDetail(codeOverride, onComplete)`: the `triggerInitEvents` parameter is removed. |
-  | `getAll(..., completion: ((PisanoActions) -> Unit)?)` and `getTrigger(..., completion: ((PisanoActions) -> Unit)?)` | The `completion` type is `((CloseStatus) -> Unit)?`. |
-  | `notifySurveyEvent(action)` and `clearCompletion()` | Removed. Use `PisanoSDK.subscribe` and the `show()` completion. |
+  | `fetchSdkDetail(codeOverride, triggerInitEvents, onComplete)` | `fetchSdkDetail(codeOverride, onComplete)` |
+  | `getAll(..., completion: ((PisanoActions) -> Unit)?)`, `getTrigger(..., completion: ((PisanoActions) -> Unit)?)` | The `completion` type is `((CloseStatus) -> Unit)?`. |
+  | `notifySurveyEvent(action)`, `clearCompletion()` | Removed. Use `PisanoSDK.subscribe` and the `show()` completion. |
 
-- **`BottomSheetWebView` is not public anymore:** It is an internal class of the SDK. Show surveys with `PisanoSDK.show`.
-- **`PisanoSDK.init` from Java:** `init(manager)` still compiles. The `completion` parameter is optional (`@JvmOverloads`).
+### Behavior changes to check
+
+These need no code change, but make sure your app does not rely on the old behavior.
+
 - **One survey at a time:** If a survey is open, another `show()` does not open a second one and ends with `NONE`.
+- **`healthCheck`:** It always reports on the main thread. When the SDK is not initialized it reports `false`. Before, it stayed silent.
+- **`track`:** It has an optional `completion`: `true` when the server accepted the event, `false` when it was not sent.
+
+## What else is new
+
+You do not need any of this to upgrade.
 
 ### Features
 
 - **`PisanoSDK.subscribe`:** Receive `OPENED`, `FEEDBACK_SUBMITTED`, `REDIRECTED_TO_STORE` and `CLOSED` for the surveys that `show()` displays. `CLOSED` has a `closeReason`, for example `CLOSE_BUTTON`, `BACK` or `DRAG`. Call `cancel()` on the returned subscription when you no longer need the events.
-- **Init completion:** `PisanoSDK.init(manager) { succeeded -> }` reports a `Boolean`: `true` when the SDK booted, `false` when it failed.
-- **`PisanoTask`:** `init`, `healthCheck`, `show` and `track` return a task. `cancel()` stops the call and reports once: `false` for `init`, `healthCheck` and `track`, `NONE` for `show`. It has no effect after the call finished or after `show` put the survey on screen. `PisanoSDK.clear()` (`clearAction()` is a deprecated alias) cancels the calls that are still running.
-- **`PisanoSDK.clear()`:** Closes the open survey and clears the SDK's local data. Call it when a user logs out. The closed survey ends its `show()` with `NONE`. `clearAction()` is a deprecated alias.
+- **`PisanoTask`:** `cancel()` stops the call and reports once: `false` for `init`, `healthCheck` and `track`, `NONE` for `show`. It has no effect after the call finished or after `show` put the survey on screen.
+- **`PisanoSDK.clear()`:** Closes the open survey, cancels the calls that are still running and clears the SDK's local data. Call it when a user logs out. The closed survey ends its `show()` with `NONE`. `clearAction()` is a deprecated alias.
 - **`PisanoSDK.requestTimeout`:** Connect and read timeout of the network requests, in seconds. The default is `30`.
 - **`PisanoSDK.automaticStoreReview`:** The default is `true`. Set it to `false` to stop the SDK from asking for the Google Play review prompt and run your own flow on the `REDIRECTED_TO_STORE` event.
 
