@@ -95,3 +95,5 @@ PisanoSDK.subscribe { event ->
 
 - **Close right after submit:** If the customer closes the survey after submitting, `show()` reports `SEND_FEEDBACK`.
 - **Back key:** The bottom sheet closes only on the back key and reports `BACK`.
+- **Survey page fails to load:** The widget closes by itself, the `CLOSED` event's `closeReason` is `LOAD_FAILED` and `show()` ends with `NONE`. A load error after the page is visible does not close the widget.
+- **Display once:** A survey counts as shown when the widget closes, not when it starts to load. A survey that failed to load is shown again in a later session. A survey that was answered or closed is not shown again.

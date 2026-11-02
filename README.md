@@ -372,7 +372,7 @@ Every `show()` call ends with one `CloseStatus`. It says how the call ended. Wha
 | `CHANNEL_QUOTA_EXCEEDED` | Not shown: the quota is exceeded. |
 | `CHANNEL_PASSIVE` | Not shown: the survey is passive. |
 | `DISPLAY_RATE_LIMITED` | Not shown: skipped by `display_rate`. |
-| `NONE` | No survey was shown and no other value fits, for example the SDK is not initialized or a request failed. |
+| `NONE` | No survey was shown and no other value fits, for example the SDK is not initialized, a request failed or the survey page did not load (`closeReason` is `LOAD_FAILED`). |
 
 ### `PisanoSDK.track()`
 
@@ -760,7 +760,7 @@ implementation 'com.squareup.okhttp3:okhttp:4.9.3'
 
 ### Display once (`display_once`)
 
-The backend can send `display_once` (boolean) and optionally `display_once_delay_period`. The SDK stores "shown" state locally and, if a delay period is set, will not show again until that period has passed. **`display_once_delay_period` is in minutes** (e.g. `1440` = once per day; it was in hours before 1.4.3). When skipped, the `show()` completion receives `CloseStatus.DISPLAY_ONCE`.
+The backend can send `display_once` (boolean) and optionally `display_once_delay_period`. The SDK stores "shown" state locally and, if a delay period is set, will not show again until that period has passed. **`display_once_delay_period` is in minutes** (e.g. `1440` = once per day; it was in hours before 1.4.3). The state is stored when the widget closes; a survey whose page failed to load is not stored and can be shown again. When skipped, the `show()` completion receives `CloseStatus.DISPLAY_ONCE`.
 
 ### Why is `code` required in init?
 
