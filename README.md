@@ -430,7 +430,7 @@ task.cancel()
 
 ### `PisanoSDK.clearAction()`
 
-Clears the SDK's local data (Shared Preferences) and cancels the calls that are still running, as `PisanoTask.cancel()` does. This is useful when logging out a user to ensure fresh state for the next user. A survey that is already on screen is not closed.
+Clears the SDK's local data (Shared Preferences), cancels the calls that are still running and closes an open survey. Call it when a user logs out. The closed survey ends its `show()` with `NONE`, and its `CLOSED` event has the close reason `CLEAR`.
 
 **Example:**
 

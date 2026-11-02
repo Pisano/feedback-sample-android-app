@@ -54,8 +54,9 @@ val subscription = PisanoSDK.subscribe { event -> /* OPENED, CLOSED, ... */ }
 
 - **`PisanoSDK.subscribe`:** Receive `OPENED`, `FEEDBACK_SUBMITTED`, `REDIRECTED_TO_STORE` and `CLOSED` for the surveys that `show()` displays. `CLOSED` has a `closeReason`, for example `CLOSE_BUTTON`, `BACK`, `DRAG` or `OUTSIDE`. Call `cancel()` on the returned subscription when you no longer need the events.
 - **Init completion:** `PisanoSDK.init(manager) { succeeded -> }` reports a `Boolean`: `true` when the SDK booted, `false` when it failed.
-- **`PisanoTask`:** `init`, `healthCheck`, `show` and `track` return a `PisanoTask`. Call `cancel()` to stop a call that has not finished. Its completion is called once: with `false` for `init`, `healthCheck` and `track`, and with `NONE` for `show`. `cancel()` does nothing after the call finished or after the survey is on screen. `PisanoSDK.clearAction()` cancels the calls that are still running.
-- **`track` completion:** `PisanoSDK.track(..., completion)` reports `true` when the server accepted the event and `false` when it was not sent or the task was cancelled.
+- **`PisanoTask`:** `init`, `healthCheck`, `show` and `track` return a `PisanoTask`. Call `cancel()` to stop a call that has not finished.
+- **`track` completion:** `track` has an optional `completion`. It reports `true` when the event was sent and `false` when it was not.
+- **`clearAction()` closes the open survey:** Call it when a user logs out. An open survey closes and its `show()` ends with `NONE`.
 - **`PisanoSDK.automaticStoreReview`:** The default is `true`. Set it to `false` to stop the SDK from asking for the Google Play review prompt and run your own flow on the `REDIRECTED_TO_STORE` event.
 
 ### Examples
