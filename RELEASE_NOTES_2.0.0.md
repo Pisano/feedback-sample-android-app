@@ -57,7 +57,8 @@ Only if you pass it by name: `PisanoSDK.track(event = "x", languageCode = "en")`
 
 These need no code change, but make sure your app does not rely on the old behavior.
 
-- **One survey at a time:** If a survey is open, another `show()` does not open a second one and ends with `NONE`.
+- **One survey at a time:** If a survey is open, another `show()` does not open a second one and ends with `NONE`. This also holds when two `show()` calls are still on the network: the survey that is ready first opens, the other ends with `NONE`.
+- **No connectivity pre-check:** `healthCheck`, `show` and `track` send the request without asking the system first whether the device is online. Before, the SDK could skip the request when the system reported offline by mistake, for example with some VPNs, Doze, Data Saver or a network handover. The results stay the same when the device is offline: `healthCheck` and `track` report `false`, `show` ends with `NONE`. The call now waits for the request to fail, up to `PisanoSDK.requestTimeout`.
 - **`healthCheck`:** It always reports on the main thread. When the SDK is not initialized it reports `false`. Before, it stayed silent.
 - **`track`:** It has an optional `completion`: `true` when the server accepted the event, `false` when it was not sent.
 - **`clear()`:** It forgets the `PisanoSDKManager`. Call `PisanoSDK.init` again after it, for example when the next user logs in. Until then `show()` ends with `NONE`, and `track()` and `healthCheck()` report `false`. Before, `show()` after `clear()` still worked with the previous user's code.
@@ -133,4 +134,5 @@ PisanoSDK.requestTimeout = 60
 - **Close right after submit:** If the customer closes the survey after submitting, `show()` reports `SEND_FEEDBACK`.
 - **Back key:** The widget closes only once on the back key and reports `BACK`, in the bottom sheet and in full screen. The back key does not go back in the survey page anymore.
 - **Survey page fails to load:** The widget closes by itself, the `CLOSED` event's `closeReason` is `LOAD_FAILED` and `show()` ends with `NONE`. A load error after the page is visible does not close the widget.
+- **Survey screen does not start:** If Android does not start the survey screen, for example the app is in the background and the launch is blocked, `show()` ends with `NONE` after 5 seconds. Before, it never reported a result. If the screen starts later, it closes without a survey.
 - **Display once:** A survey counts as shown when the widget closes, not when it starts to load. A survey that failed to load is shown again in a later session. A survey that was answered or closed is not shown again.
