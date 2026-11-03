@@ -785,13 +785,7 @@ The backend can return `display_rate` (0–100). The SDK decides deterministical
 
 ### ProGuard / R8 rules
 
-If you need custom rules:
-
-```proguard
-# Pisano SDK
--keep class co.pisano.feedback.** { *; }
--dontwarn co.pisano.feedback.**
-```
+The SDK ships its own rules in `consumer-rules.pro`, and R8 applies them to your app automatically. They keep what Retrofit, Gson and the WebView bridge need, so a release build with `minifyEnabled true` works without extra rules. You do not need to add any rule for the SDK.
 
 ## ✅ Smoke tests
 
@@ -845,7 +839,7 @@ Bottom sheet feature depends on Material Design Components. If the bottom sheet 
 
 ### MinifyEnabled error
 
-Check your ProGuard rules. The `consumer-rules.pro` file is automatically included, but you may need to add custom rules.
+The SDK's `consumer-rules.pro` is included automatically. If `init` fails in a release build with `Unable to create call adapter for interface`, you use an SDK version older than 2.0.0. Update it. Do not use `-keep class co.pisano.feedback.** { *; }` as a workaround, it turns off shrinking for the whole SDK.
 
 ## Pisano platform: where to get credentials
 

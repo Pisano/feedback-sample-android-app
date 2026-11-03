@@ -122,6 +122,7 @@ PisanoSDK.requestTimeout = 60
 
 ### Bug fixes
 
+- **Release builds with R8:** The SDK's `consumer-rules.pro` now keeps what Retrofit, Gson and the WebView bridge need. Before, a release build with minification (the default with Android Gradle Plugin 8) crashed in `init` with `Unable to create call adapter for interface`. You do not need to add rules to your app.
 - **Close right after submit:** If the customer closes the survey after submitting, `show()` reports `SEND_FEEDBACK`.
 - **Back key:** The widget closes only once on the back key and reports `BACK`, in the bottom sheet and in full screen. The back key does not go back in the survey page anymore.
 - **Survey page fails to load:** The widget closes by itself, the `CLOSED` event's `closeReason` is `LOAD_FAILED` and `show()` ends with `NONE`. A load error after the page is visible does not close the widget.
