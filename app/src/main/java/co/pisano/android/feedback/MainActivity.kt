@@ -140,7 +140,36 @@ class MainActivity : AppCompatActivity() {
             txtPreflight.text = ""
             txtLastEvent.text = ""
             PisanoSdkState.setLastAction(null)
+            // clear() forgets the manager: show/track/healthCheck fail until init runs again.
             PisanoSDK.clear()
+            txtPreflight.text = getString(R.string.reinit_running)
+            txtPreflight.isVisible = true
+            val task = PisanoSdkBootstrapper.reinitialize(this) { ok ->
+                txtPreflight.text = getString(if (ok) R.string.reinit_ok else R.string.reinit_failed)
+            }
+            if (task == null) txtPreflight.text = getString(R.string.reinit_failed)
+        }
+
+        // requestTimeout: connect and read timeout of the network requests, in seconds (default 30).
+        val etRequestTimeout = findViewById<TextInputEditText>(R.id.etRequestTimeout)
+        etRequestTimeout.setText(PisanoSDK.requestTimeout.toString())
+        findViewById<MaterialButton>(R.id.btnSetTimeout).setOnClickListener {
+            PisanoSDK.requestTimeout = etRequestTimeout.text?.toString()?.trim()?.toLongOrNull() ?: 0L
+            // A value below 1 resets it to the default.
+            etRequestTimeout.setText(PisanoSDK.requestTimeout.toString())
+            txtPreflight.text = getString(R.string.request_timeout_set, PisanoSDK.requestTimeout)
+            txtPreflight.isVisible = true
+        }
+
+        // track: send an event. The completion gets true when the server accepted it.
+        val etEventName = findViewById<TextInputEditText>(R.id.etEventName)
+        findViewById<MaterialButton>(R.id.btnTrack).setOnClickListener {
+            val event = etEventName.text?.toString()?.trim().orEmpty().ifEmpty { "sample_event" }
+            txtPreflight.text = getString(R.string.track_running, event)
+            txtPreflight.isVisible = true
+            PisanoSDK.track(event = event) { ok ->
+                txtPreflight.text = getString(if (ok) R.string.track_ok else R.string.track_failed, event)
+            }
         }
 
         btnHealthCheck.setOnClickListener {
