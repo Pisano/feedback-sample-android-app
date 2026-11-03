@@ -14,6 +14,8 @@
     <string name="health_check">Sağlık Kontrolü</string>
     <string name="config_missing">Konfigürasyon eksik. Lütfen PISANO_* değerlerini ayarlayın (README).</string>
     <string name="action_status">Aksiyon Durumu: %1$s</string>
+    <string name="last_event">Son Olay: %1$s</string>
+    <string name="automatic_store_review">Otomatik mağaza değerlendirmesi</string>
     <string name="custom_title">Özel Başlık</string>
     <string name="custom_title_color">Özel Başlık Rengi</string>
     <string name="font">Yazı Tipi</string>

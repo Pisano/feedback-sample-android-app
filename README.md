@@ -8,58 +8,30 @@ Pisano Feedback Android SDK helps you collect surveys and user feedback in your 
 
 - **Module:** `app/` — single sample application (XML layouts + Kotlin).
 - The sample UI (buttons, forms) is **native**; the survey UI is **rendered by the SDK** after `PisanoSDK.show(...)` (your app does not build survey screens itself).
+- The form lets you try **View Mode** (Default / Bottom Sheet), **Dismiss on drag**, a custom title, customer fields and the **Automatic store review** switch. In debug builds it also shows the last result and event.
 
-SDK artifact used by this sample: **`co.pisano:feedback`** (version **1.4.3**, Maven Central)
+SDK artifact used by this sample: **`co.pisano:feedback`** (version **2.0.0**, Maven Central)
 
-Details: [RELEASE_NOTES_1.4.3.md](./RELEASE_NOTES_1.4.3.md)
+Details: [RELEASE_NOTES_2.0.0.md](./RELEASE_NOTES_2.0.0.md)
 
-## MT-41 — Bottom sheet `dismissOnDrag` (sample UI)
-
-The form screen includes **View Mode** (Default / Bottom Sheet) and **Dismiss on drag** (Off / On). The selected value is passed to `PisanoSDK.show(..., dismissOnDrag = ...)`.
-
-- **Off (default):** Header drag resizes the sheet; WebView scroll does not move the sheet; drag-to-dismiss disabled.
-- **On:** Swipe down from the header to dismiss.
-
-## 📋 Table of Contents
-
-- [Features](#features)
-- [Requirements](#requirements)
-- [Installation](#installation)
-- [Run the sample app](#run-the-sample-app)
-- [Local credentials (do not commit)](#local-credentials-do-not-commit)
-- [Quick Start](#quick-start)
-- [Code samples](#code-samples)
-- [API Reference](#api-reference)
-- [Configuration](#configuration)
-- [Build / Run](#build--run)
-- [Tests](#tests)
-- [Frequently Asked Questions](#frequently-asked-questions)
-- [Troubleshooting](#troubleshooting)
-- [Smoke tests](#smoke-tests)
-- [Pisano platform: where to get credentials](#pisano-platform-where-to-get-credentials)
+Migrating from 1.x? See the [migration steps](./RELEASE_NOTES_2.0.0.md#upgrading-from-1x).
 
 ## ✨ Features
 
-- ✅ **SDK-hosted Survey UI**: Surveys/questions are rendered by the SDK (typically via embedded web content)
-- ✅ **Native sample app UI**: Sample screens implemented with XML Views + Kotlin
-- ✅ **Kotlin & Java SDK API**: The SDK can be used from Kotlin and Java
-- ✅ **Flexible View Modes**: Full-screen and bottom sheet view options
-- ✅ **Event Tracking**: Ability to track user activities
-- ✅ **Health Check**: Ability to check SDK status
-- ✅ **User Information Support**: Ability to send user data
-- ✅ **Multi-Language Support**: Ability to display surveys in different languages
-- ✅ **Custom Title**: Customizable title support
-- ✅ **Code-based configuration**: Single source in `init()` (applicationId, accessKey, code, URLs); all API calls use this state
-- ✅ **Display rate throttling**: Backend can send `display_rate` (0–100); SDK shows or skips deterministically and reports `DISPLAY_RATE_LIMITED` when skipped
-- ✅ **Per-call `show()` callback**: Optional `completion` receives the result of that `show()` call only
-- ✅ **Loading indicator**: Full screen mode shows a loading indicator while the survey page loads
+- ✅ **Survey UI hosted by the SDK**: Your app does not build survey screens
+- ✅ **Kotlin & Java**: Use the SDK from both
+- ✅ **View modes**: Full screen and bottom sheet
+- ✅ **Event tracking and health check**: `PisanoSDK.track` and `PisanoSDK.healthCheck`
+- ✅ **Customer information**: Send name, email, phone, external ID and custom attributes
+- ✅ **Languages and custom title**: Show the survey in a language you choose, with your own title
+- ✅ **Results and events**: The `show()` completion and `PisanoSDK.subscribe` tell you what happened
+- ✅ **Store review**: When a survey asks for a store rating, the SDK shows the Google Play In-App Review prompt by default. To turn it off and run your own flow, set `PisanoSDK.automaticStoreReview = false`
 
 ## 📱 Requirements
 
 From this sample project (`app/build.gradle` and root `build.gradle`):
 
-- **minSdk**: 21 (SDK 1.4.3 requires `minSdkVersion` 21 or higher)
-- **compileSdk / targetSdk**: 34
+- **minSdk**: 21 (SDK 2.0.0 requires `minSdkVersion` 21 or higher)
 - **Java**: 17 (toolchain / `compileOptions`)
 - **Android Gradle Plugin**: 8.7.3
 - **Kotlin**: 1.9.24
@@ -83,7 +55,7 @@ allprojects {
 
 ```gradle
 dependencies {
-    implementation 'co.pisano:feedback:1.4.3'
+    implementation 'co.pisano:feedback:2.0.0'
 }
 ```
 
@@ -112,35 +84,22 @@ Debug APK:
 ./gradlew :app:assembleDebug
 ```
 
-## 🔑 Local credentials (do not commit)
+## 🔑 Credentials
 
-This repository **does not include any API keys**.
+The sample does not include API keys. Add your own `PISANO_*` values before you run it:
 
-To run locally, you must provide your own `PISANO_*` credentials. This sample reads secrets at build-time and injects them into `BuildConfig`.
+1. Copy `local.properties.example` to `local.properties`.
+2. Fill in the keys. See [where to get them](#pisano-platform-where-to-get-credentials).
 
-**Where values come from (priority order)**:
+You can also pass the same keys as Gradle `-P` properties or environment variables.
 
-- Gradle `-P` properties
-- Environment variables
-- `pisano-config.plist` (optional, local-only; gitignored)
-- `local.properties` (gitignored)
-
-**Recommended local setup**:
-
-1. Copy `local.properties.example` → `local.properties`
-2. Fill the keys (**do not commit** `local.properties`)
-
-**Optional (for quick local testing)**:
-
-- Create `pisano-config.plist` in the repo root (gitignored) and fill the same keys.
-
-If credentials are missing, the sample app will **not initialize the SDK** (it skips init) and shows a user-facing warning, so opening the widget may not work until you add your own credentials.
+If a key is missing, the sample skips the SDK init and shows a warning, so the survey does not open.
 
 ## 🚀 Quick Start
 
 ### 1) Configure credentials
 
-See: [Local credentials (do not commit)](#local-credentials-do-not-commit)
+Add these keys to `local.properties` (see Credentials above):
 
 **Required keys**:
 
@@ -167,61 +126,44 @@ The sample also supports a deep link to pass a code override:
 
 - `pisano://show?code=...`
 
-### About `code` (init default vs per-call override)
+### About `code`
 
-**Single rule to remember:** whatever you pass to **`.setCode(...)`** on **`PisanoSDKManager.Builder`** becomes the **default** channel/survey code for the process after **`PisanoSDK.init(manager)`**. On **`show`** and **`healthCheck`**, if you **do not pass `code` (or you pass `null` where the API allows it)**, the SDK **always** uses that **init** code—it does not pick a different code by itself.
-
-- **Multi-survey apps:** pass an explicit **`code`** on each **`show(...)`** so it is obvious which survey each screen opens.
+`.setCode(...)` on `PisanoSDKManager.Builder` sets the default survey code. `show()` and `healthCheck()` use it unless you pass a `code`. A `code` you pass applies to that call only. If your app has more than one survey, pass the `code` on each `show()` call.
 
 ## 💡 Code samples
 
 ### 1) Initializing the SDK
 
-You can initialize at app startup (recommended):
+You can initialize at app startup (recommended). Get the values from the Pisano panel:
 
 ```kotlin
 import android.app.Application
 import android.util.Log
 import com.example.app.BuildConfig   // replace with your application module’s BuildConfig
-import co.pisano.feedback.data.helper.ActionListener
-import co.pisano.feedback.data.helper.PisanoActions
 import co.pisano.feedback.managers.PisanoSDK
 import co.pisano.feedback.managers.PisanoSDKManager
 
 class MyApplication : Application() {
     override fun onCreate() {
         super.onCreate()
-        
+
         val manager = PisanoSDKManager.Builder(this)
             .setApplicationId("YOUR_APP_ID")
             .setAccessKey("YOUR_ACCESS_KEY")
             .setCode("YOUR_CODE")
-            .setApiUrl("https://api.pisano.co")
-            .setFeedbackUrl("https://web.pisano.co/web_feedback")
-            .setEventUrl("https://track.pisano.co/track")
+            .setApiUrl("YOUR_API_URL")
+            .setFeedbackUrl("YOUR_FEEDBACK_URL")
+            .setEventUrl("YOUR_EVENT_URL")   // optional, only for PisanoSDK.track
             .setDebug(BuildConfig.DEBUG)
-            .setCloseStatusCallback(object : ActionListener {
-                override fun action(action: PisanoActions) {
-                    when (action) {
-                        PisanoActions.INIT_SUCCESS -> {
-                            Log.d("Pisano", "SDK initialized successfully")
-                        }
-                        PisanoActions.INIT_FAILED -> {
-                            Log.e("Pisano", "SDK initialization failed")
-                        }
-                        PisanoActions.SEND_FEEDBACK -> {
-                            Log.d("Pisano", "Feedback sent")
-                        }
-                        PisanoActions.CLOSED -> {
-                            Log.d("Pisano", "Survey closed")
-                        }
-                        else -> {}
-                    }
-                }
-            })
             .build()
-        
-        PisanoSDK.init(manager)
+
+        PisanoSDK.init(manager) { succeeded ->
+            if (succeeded) {
+                Log.d("Pisano", "SDK initialized successfully")
+            } else {
+                Log.e("Pisano", "SDK initialization failed")
+            }
+        }
     }
 }
 ```
@@ -232,10 +174,9 @@ class MyApplication : Application() {
 import android.app.Application;
 import android.util.Log;
 
-import co.pisano.feedback.data.helper.ActionListener;
-import co.pisano.feedback.data.helper.PisanoActions;
 import co.pisano.feedback.managers.PisanoSDK;
 import co.pisano.feedback.managers.PisanoSDKManager;
+import kotlin.Unit;
 
 public class MyApplication extends Application {
     @Override
@@ -246,31 +187,28 @@ public class MyApplication extends Application {
             .setApplicationId("YOUR_APP_ID")
             .setAccessKey("YOUR_ACCESS_KEY")
             .setCode("YOUR_CODE")                    // required
-            .setApiUrl("https://api.pisano.co")
-            .setFeedbackUrl("https://web.pisano.co/web_feedback")
-            .setEventUrl("https://track.pisano.co/track")
+            .setApiUrl("YOUR_API_URL")
+            .setFeedbackUrl("YOUR_FEEDBACK_URL")
+            .setEventUrl("YOUR_EVENT_URL")   // optional, only for PisanoSDK.track
             .setDebug(BuildConfig.DEBUG)              // optional, recommended
-            .setCloseStatusCallback(new ActionListener() {
-                @Override
-                public void action(PisanoActions action) {
-                    Log.d("Pisano", "action=" + action);
-                }
-            })
             .build();
 
-        PisanoSDK.INSTANCE.init(manager);
+        PisanoSDK.INSTANCE.init(manager, succeeded -> {
+            Log.d("Pisano", "init succeeded=" + succeeded);
+            return Unit.INSTANCE;
+        });
     }
 }
 ```
 
 ### 2) Showing the Feedback Widget
 
-Basic usage (uses **init** `code`; no per-call override):
+Basic usage:
 
 ```kotlin
 import co.pisano.feedback.managers.PisanoSDK
 
-PisanoSDK.show()   // same as omitting `code` — uses `.setCode(...)` from Builder / init
+PisanoSDK.show()
 ```
 
 Advanced usage:
@@ -309,7 +247,9 @@ PisanoSDK.show(
     language = "en",
     payload = payload,
     pisanoCustomer = customer,
-    code = null   // explicit: use init `code`; pass a non-null string to override for this call only
+    completion = { status ->
+        Log.d("Pisano", "Result: $status")
+    }
 )
 ```
 
@@ -328,7 +268,9 @@ Initializes the SDK. This method must be called either at application startup (u
   - `feedbackUrl: String` - Feedback widget URL
   - `eventUrl: String?` - Event tracking URL (optional; required if you use `PisanoSDK.track`)
   - `isDebug: Boolean` - When `true`, SDK logs (e.g. display_rate skip, fetch success/fail) are printed to Logcat with tag `PISANO_SDK` (optional, default `false`)
-  - `closeStatusActionListener: ActionListener?` - Initialization result callback (optional)
+- `completion: ((Boolean) -> Unit)?` - **Optional.** Called once on the main thread: `true` when the SDK booted, `false` when the request failed or the task was cancelled.
+
+**Returns:** a [`PisanoTask`](#pisanotask-cancel-a-running-call).
 
 **Example:**
 
@@ -337,26 +279,15 @@ val manager = PisanoSDKManager.Builder(context)
     .setApplicationId("app-123")
     .setAccessKey("key-456")
     .setCode("code-789")
-    .setApiUrl("https://api.pisano.co")
-    .setFeedbackUrl("https://web.pisano.co/web_feedback")
-    .setEventUrl("https://track.pisano.co/track")
+    .setApiUrl("YOUR_API_URL")
+    .setFeedbackUrl("YOUR_FEEDBACK_URL")
+    .setEventUrl("YOUR_EVENT_URL")   // optional, only for PisanoSDK.track
     .setDebug(true)
-    .setCloseStatusCallback(object : ActionListener {
-        override fun action(action: PisanoActions) {
-            when (action) {
-                PisanoActions.INIT_SUCCESS -> {
-                    println("SDK initialized successfully")
-                }
-                PisanoActions.INIT_FAILED -> {
-                    println("SDK initialization failed")
-                }
-                else -> {}
-            }
-        }
-    })
     .build()
 
-PisanoSDK.init(manager)
+PisanoSDK.init(manager) { succeeded ->
+    println(if (succeeded) "SDK initialized successfully" else "SDK initialization failed")
+}
 ```
 
 ### `PisanoSDK.show()`
@@ -373,7 +304,7 @@ Displays the feedback widget.
 - `pisanoCustomer: PisanoCustomer?` - User information (optional)
 - `code: String?` - **Optional.** Widget code for this call. If **not** provided, the SDK uses the **code from `init()` (boot)**. If provided, this code is used for this request (e.g. to show a different widget than the one configured at init).
 - `dismissOnDrag: Boolean` - Bottom sheet only. When `true`, a swipe down from the header dismisses the sheet (optional, default `false`)
-- `completion: ((PisanoActions) -> Unit)?` - **Optional (1.4.1+).** Receives the result of this call only, for example `OPENED`, `CLOSED`, `SEND_FEEDBACK` or `DISPLAY_RATE_LIMITED`. The global `setCloseStatusCallback` listener still receives the same events.
+- `completion: ((CloseStatus) -> Unit)?` - **Optional.** Called exactly once on the main thread with the result of this call. See [`CloseStatus`](#closestatus-the-result-of-show).
 
 **User Information Fields:**
 - `name: String?` - User name
@@ -402,61 +333,58 @@ PisanoSDK.show(
     title = title,
     language = "en",
     payload = null,
-    pisanoCustomer = customer,
-    code = null   // use init `code`
+    pisanoCustomer = customer
 )
 ```
 
-**Using init code (default):**  
-If you **omit** `code` or pass **`null`**, the SDK **always** uses the **`.setCode(...)`** value from **`PisanoSDKManager.Builder` / `PisanoSDK.init`**.
-
-```kotlin
-// Uses the code from init — `code` omitted
-PisanoSDK.show(viewMode = ViewMode.BOTTOM_SHEET, language = "en")
-
-// Equivalent intent — explicit null where you name other parameters
-PisanoSDK.show(viewMode = ViewMode.BOTTOM_SHEET, language = "en", code = null)
-```
-
-**Per-call result callback (1.4.1+):**  
-Pass `completion` to get the result of this `show()` call only. The global `setCloseStatusCallback` listener still receives the same events.
+**Result of the call:**  
+Pass `completion` to get the result of this `show()` call. It is called once per call.
 
 ```kotlin
 PisanoSDK.show(
     viewMode = ViewMode.BOTTOM_SHEET,
-    completion = { action ->
-        when (action) {
-            PisanoActions.OPENED -> Log.d("Pisano", "Survey opened")
-            PisanoActions.SEND_FEEDBACK -> Log.d("Pisano", "Feedback sent")
-            PisanoActions.CLOSED -> Log.d("Pisano", "Survey closed")
-            PisanoActions.DISPLAY_RATE_LIMITED -> Log.d("Pisano", "Skipped by display_rate")
+    completion = { status ->
+        when (status) {
+            CloseStatus.SEND_FEEDBACK -> Log.d("Pisano", "Feedback sent")
+            CloseStatus.CLOSED -> Log.d("Pisano", "Survey closed")
+            CloseStatus.DISPLAY_RATE_LIMITED -> Log.d("Pisano", "Skipped by display_rate")
+            CloseStatus.NONE -> Log.d("Pisano", "No survey was shown")
             else -> {}
         }
     }
 )
 ```
 
-**Overriding code for a single call:**  
-You can pass a different `code` for this call only; the SDK will use it for this request (e.g. to show another widget).
+**Another survey for one call:**  
+Pass `code` to show a different survey for this call only, for example `PisanoSDK.show(code = "PSN-other-widget")`. Without `code`, the SDK uses the code from `init`.
 
-```kotlin
-// Uses "PSN-other-widget" for this call only; init code is unchanged
-PisanoSDK.show(
-    viewMode = ViewMode.BOTTOM_SHEET,
-    language = "tr",
-    code = "PSN-other-widget"
-)
-```
+### `CloseStatus` (the result of `show()`)
+
+Every `show()` call ends with one `CloseStatus`. It says how the call ended. What happens while the survey is open comes through [`PisanoSDK.subscribe`](#survey-events-with-pisanosdksubscribe).
+
+| Value | Meaning |
+|---|---|
+| `CLOSED` | The survey was closed without a submit: close button, back, drag, a tap outside the bottom sheet, or your app or the system taking the widget away. The `CLOSED` event's `closeReason` tells which. |
+| `SEND_FEEDBACK` | The survey was submitted, however the widget closed afterwards. |
+| `DISPLAY_ONCE` | Not shown: the customer saw the survey before. |
+| `PREVENT_MULTIPLE_FEEDBACK` | Not shown: the customer already submitted a feedback in the given time period. |
+| `CHANNEL_QUOTA_EXCEEDED` | Not shown: the quota is exceeded. |
+| `CHANNEL_PASSIVE` | Not shown: the survey is passive. |
+| `DISPLAY_RATE_LIMITED` | Not shown: skipped by `display_rate`. |
+| `NONE` | No survey was shown and no other value fits, for example the SDK is not initialized, a request failed or the survey page did not load (`closeReason` is `LOAD_FAILED`). |
 
 ### `PisanoSDK.track()`
 
-Tracks user activities and automatically triggers the feedback widget if needed.
+Tracks a user activity by sending an event to the `eventUrl` that you set in `PisanoSDKManager.Builder`.
 
 **Parameters:**
 - `event: String` - Event name (required)
 - `payload: HashMap<String, String>?` - Event data (optional)
 - `pisanoCustomer: PisanoCustomer?` - User information (optional)
-- `languageCode: String?` - Language code (optional)
+- `language: String?` - Language code (optional)
+- `completion: ((Boolean) -> Unit)?` - **Optional.** Called once on the main thread: `true` when the server accepted the event, `false` when it was not sent (the SDK is not initialized, there is no `eventUrl` or no network, the request failed) or the task was cancelled.
+
+**Returns:** a [`PisanoTask`](#pisanotask-cancel-a-running-call).
 
 **Example:**
 
@@ -476,18 +404,51 @@ PisanoSDK.track(
     event = "purchase_completed",
     payload = payload,
     pisanoCustomer = customer,
-    languageCode = "en"
+    language = "en"
 )
 ```
 
-### `PisanoSDK.clearAction()`
+### `PisanoTask`: cancel a running call
 
-Clears the SDK's local data (Shared Preferences). This is useful when logging out a user to ensure fresh state for the next user.
+`init`, `healthCheck`, `show` and `track` return a `PisanoTask`. Keeping it is optional.
+
+- `cancel()` stops the call when it has not finished. The network requests are cancelled and the `completion` is called once, on the main thread, with the cancel result. A result that arrives later is dropped.
+- `isCancelled` tells whether `cancel()` stopped the call.
+
+| Call | Cancel result |
+| --- | --- |
+| `init`, `healthCheck`, `track` | `false` |
+| `show` | `CloseStatus.NONE` (the survey is not shown) |
+
+`cancel()` does nothing when the call has already finished. For `show`, it also does nothing once the survey is on screen; close the survey instead.
+
+```kotlin
+val task = PisanoSDK.show { status -> /* NONE when cancelled */ }
+task.cancel()
+```
+
+`healthCheck` always reports on the main thread, also when it fails at once (for example when the SDK is not initialized): `false`.
+
+### `PisanoSDK.clear()`
+
+`clearAction()` is a deprecated alias of `clear()`.
+
+Clears the SDK's local data (Shared Preferences), cancels the calls that are still running, as `PisanoTask.cancel()` does, closes a survey that is open and forgets the `PisanoSDKManager`. This is useful when logging out a user to ensure fresh state for the next user. Call `PisanoSDK.init` again for the next user: until then `show()` ends with `NONE`, and `track()` and `healthCheck()` report `false`. The closed survey ends its `show()` with `NONE`, even if the customer had submitted it, and the `CLOSED` event has the close reason `PisanoCloseReason.CLEAR`. A survey that did not open yet does not open. The SDK does not remember a closed survey as displayed, so `displayOnce` does not block it later.
 
 **Example:**
 
 ```kotlin
-PisanoSDK.clearAction()
+PisanoSDK.clear()
+// Next user: set the SDK up again.
+PisanoSDK.init(manager)
+```
+
+### `PisanoSDK.requestTimeout`
+
+Connect and read timeout of the network requests, in seconds. Default `30`. A change applies to the requests that start after it. A value below `1` sets the default again.
+
+```kotlin
+PisanoSDK.requestTimeout = 60
 ```
 
 ### `PisanoSDK.healthCheck()`
@@ -499,7 +460,9 @@ Checks the SDK status. It is recommended to use this before displaying the widge
 - `pisanoCustomer: PisanoCustomer?` - User information (optional)
 - `payload: HashMap<String, String>?` - Extra data (optional)
 - `code: String?` - **Optional.** Widget code for this check. If **not** provided, the SDK uses the **code from `init()` (boot)**. If provided, this code is used for this request.
-- `isHealthCheckSuccessful: (Boolean) -> Unit` - Health check result (true: successful, false: failed)
+- `isHealthCheckSuccessful: (Boolean) -> Unit` - Health check result (true: successful, false: failed or cancelled). It is always called on the main thread, also when the check fails at once (for example when the SDK is not initialized).
+
+**Returns:** a [`PisanoTask`](#pisanotask-cancel-a-running-call).
 
 **Example (uses init code):**
 
@@ -546,8 +509,7 @@ class MainActivity : AppCompatActivity() {
             PisanoSDK.show(
                 viewMode = ViewMode.BOTTOM_SHEET,
                 language = "en",
-                pisanoCustomer = PisanoCustomer(externalId = "USER-123"),
-                code = null   // use init `code`; set non-null to override for this call only
+                pisanoCustomer = PisanoCustomer(externalId = "USER-123")
             )
         }
         
@@ -591,7 +553,9 @@ public class MainActivity extends AppCompatActivity {
                 "en",           // language
                 null,           // payload
                 customer,
-                null            // code — null uses init `setCode`; non-null overrides this call only
+                null,           // code: null uses the code from init
+                false,          // dismissOnDrag
+                null            // completion
             );
         });
         
@@ -611,48 +575,56 @@ public class MainActivity extends AppCompatActivity {
 }
 ```
 
-### Listening to Events with ActionListener
+### Survey events with `PisanoSDK.subscribe`
 
-The SDK also notifies about widget close status through the `ActionListener` callback.
+The `show()` completion reports one result per call. `PisanoSDK.subscribe` reports what happened on the way: `OPENED`, `FEEDBACK_SUBMITTED`, `REDIRECTED_TO_STORE` and `CLOSED`. The listener receives the events of every survey shown by `show()` until you call `cancel()`. Each event carries the survey `code`. `CLOSED` also carries a `closeReason`, for example `CLOSE_BUTTON`, `BACK`, `DRAG` or `OUTSIDE`.
 
 ```kotlin
-val manager = PisanoSDKManager.Builder(context)
-    .setApplicationId("YOUR_APP_ID")
-    .setAccessKey("YOUR_ACCESS_KEY")
-    .setCode("YOUR_CODE")                    // required
-    .setApiUrl("https://api.pisano.co")
-    .setFeedbackUrl("https://web.pisano.co/web_feedback")
-    .setDebug(BuildConfig.DEBUG)              // optional, recommended
-    .setCloseStatusCallback(object : ActionListener {
-        override fun action(action: PisanoActions) {
-            when (action) {
-                PisanoActions.CLOSED -> {
-                    Log.d("Pisano", "Widget closed")
-                }
-                PisanoActions.SEND_FEEDBACK -> {
-                    Log.d("Pisano", "Feedback sent")
-                }
-                PisanoActions.OUTSIDE -> {
-                    // 1.4.1+: sent only for taps outside the bottom sheet
-                    Log.d("Pisano", "Closed by clicking outside")
-                }
-                PisanoActions.DISPLAY_ONCE -> {
-                    Log.d("Pisano", "Already shown before")
-                }
-                PisanoActions.DISPLAY_RATE_LIMITED -> {
-                    Log.d("Pisano", "Skipped due to display_rate throttling")
-                }
-                PisanoActions.CHANNEL_PASSIVE -> {
-                    Log.d("Pisano", "Survey is in passive state")
-                }
+class MainActivity : AppCompatActivity() {
+    private var subscription: PisanoSubscription? = null
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        subscription = PisanoSDK.subscribe { event ->
+            when (event.type) {
+                PisanoEventType.OPENED -> Log.d("Pisano", "Survey opened")
+                PisanoEventType.CLOSED -> Log.d("Pisano", "Survey closed: ${event.closeReason}")
                 else -> {}
             }
         }
-    })
-    .build()
+    }
 
-PisanoSDK.init(manager)
+    override fun onDestroy() {
+        super.onDestroy()
+        subscription?.cancel()   // stop receiving events when the owner goes away
+    }
+}
 ```
+
+In this sample, `MainActivity` shows the last event (debug builds) and logs every event.
+
+### Store review (`automaticStoreReview`)
+
+When a survey redirects the customer to the store rating, the SDK asks Google Play for the In-App Review prompt. This does not change the result of `show()`: after a submit it stays `SEND_FEEDBACK`. The redirect is reported as a `REDIRECTED_TO_STORE` event.
+
+| `PisanoSDK.automaticStoreReview` | In-App Review prompt | `REDIRECTED_TO_STORE.handledBySDK` |
+|---|---|---|
+| `true` (default) | Shown by the SDK | `true` |
+| `false` | Not shown | `false` |
+
+Set it to `false` to run your own review flow. Check `handledBySDK` so your flow runs only when the SDK did not ask for the review. The value is not stored: it is `true` again each time the app starts.
+
+```kotlin
+PisanoSDK.automaticStoreReview = false
+
+PisanoSDK.subscribe { event ->
+    if (event.type == PisanoEventType.REDIRECTED_TO_STORE && !event.handledBySDK) {
+        // Run your own store review flow here.
+    }
+}
+```
+
+The sample has an **Automatic store review** switch for this setting.
 
 ## ⚙️ Configuration
 
@@ -663,10 +635,10 @@ import co.pisano.feedback.data.helper.ViewMode
 import co.pisano.feedback.managers.PisanoSDK
 
 // Full-screen overlay (default) — uses init `code`
-PisanoSDK.show(viewMode = ViewMode.DEFAULT, code = null)
+PisanoSDK.show(viewMode = ViewMode.DEFAULT)
 
 // Bottom sheet — uses init `code`
-PisanoSDK.show(viewMode = ViewMode.BOTTOM_SHEET, code = null)
+PisanoSDK.show(viewMode = ViewMode.BOTTOM_SHEET)
 ```
 
 ### Display Rate (`display_rate`)
@@ -679,7 +651,7 @@ The backend can return `display_rate` (0–100) in `/detail` and/or `/trigger`. 
 
 This decision is **code-based** (state is stored per widget `code`). If the `code` changes, throttling starts fresh for the new `code`. If `display_rate` changes for the same `code`, the internal counter is reset.
 
-If a `show()` attempt is skipped due to `display_rate`, the SDK will not open UI and will emit `PisanoActions.DISPLAY_RATE_LIMITED` via the callback.
+If a `show()` attempt is skipped due to `display_rate`, the SDK will not open UI and will report `CloseStatus.DISPLAY_RATE_LIMITED` to the `show()` completion.
 
 ### Custom Title
 
@@ -697,7 +669,7 @@ val title = Title(
   backgroundColor = Color.WHITE
 )
 
-PisanoSDK.show(title = title, code = null)   // use init `code`
+PisanoSDK.show(title = title)
 ```
 
 ### User Information
@@ -717,7 +689,7 @@ val customer = PisanoCustomer(
   )
 )
 
-PisanoSDK.show(pisanoCustomer = customer, code = null)
+PisanoSDK.show(pisanoCustomer = customer)
 ```
 
 **Valid user keys (customer attributes):**
@@ -750,7 +722,7 @@ Instrumented tests (requires emulator/device):
 - Launch app (SDK init logs)
 - Tap **Get Feedback** → survey opens
 - Fill → submit
-- Close → verify callback/log status
+- Close → verify the `show()` result and the events in the log
 
 ## ❓ Frequently Asked Questions
 
@@ -801,7 +773,7 @@ implementation 'com.squareup.okhttp3:okhttp:4.9.3'
 
 ### Display once (`display_once`)
 
-The backend can send `display_once` (boolean) and optionally `display_once_delay_period`. The SDK stores "shown" state locally and, if a delay period is set, will not show again until that period has passed. **`display_once_delay_period` is in minutes** (e.g. `1440` = once per day; it was in hours before 1.4.3). When skipped, the callback receives `PisanoActions.DISPLAY_ONCE`.
+The backend can send `display_once` (boolean) and optionally `display_once_delay_period`. The SDK stores "shown" state locally and, if a delay period is set, will not show again until that period has passed. **`display_once_delay_period` is in minutes** (e.g. `1440` = once per day; it was in hours before 1.4.3). The state is stored when the widget closes; a survey whose page failed to load is not stored and can be shown again. When skipped, the `show()` completion receives `CloseStatus.DISPLAY_ONCE`.
 
 ### Why is `code` required in init?
 
@@ -811,17 +783,11 @@ In `show()` and `healthCheck()`, `code` is **optional**. If you **omit it or pas
 
 ### Why does `show()` sometimes not open the survey?
 
-The backend can return `display_rate` (0–100). The SDK decides deterministically whether to show or skip (e.g. 50 → show, skip, show, skip…). When skipped, the UI does not open and the callback receives `PisanoActions.DISPLAY_RATE_LIMITED`. Other cases: `DISPLAY_ONCE`, `CHANNEL_PASSIVE`, or quota/trigger rules.
+The backend can return `display_rate` (0–100). The SDK decides deterministically whether to show or skip (e.g. 50 → show, skip, show, skip…). When skipped, the UI does not open and the `show()` completion receives `CloseStatus.DISPLAY_RATE_LIMITED`. Other cases: `DISPLAY_ONCE`, `CHANNEL_PASSIVE`, or quota/trigger rules.
 
 ### ProGuard / R8 rules
 
-If you need custom rules:
-
-```proguard
-# Pisano SDK
--keep class co.pisano.feedback.** { *; }
--dontwarn co.pisano.feedback.**
-```
+The SDK ships its own rules in `consumer-rules.pro`, and R8 applies them to your app automatically. They keep what Retrofit, Gson and the WebView bridge need, so a release build with `minifyEnabled true` works without extra rules. You do not need to add any rule for the SDK.
 
 ## ✅ Smoke tests
 
@@ -847,7 +813,7 @@ Run on an emulator/device:
 1. Make sure the `PisanoSDK.init()` method completed successfully (with valid `applicationId`, `accessKey`, `code`)
 2. Perform a health check to verify SDK status
 3. Check internet connection
-4. If the callback receives `DISPLAY_RATE_LIMITED`, the backend's `display_rate` caused this call to be skipped (deterministic throttling)
+4. If the `show()` completion receives `DISPLAY_RATE_LIMITED`, the backend's `display_rate` caused this call to be skipped (deterministic throttling)
 
 ### Java usage error
 
@@ -859,7 +825,7 @@ PisanoSDK.INSTANCE.show(...)
 
 ### Bottom sheet closes (or does not close) on outside tap
 
-Since **1.4.1**, taps inside the bottom sheet no longer send `OUTSIDE`. A tap outside the sheet closes it only when `close_on_outside_click` is enabled for the channel in the Pisano panel.
+A tap outside the sheet closes it only when `close_on_outside_click` is enabled for the channel in the Pisano panel. `show()` ends with `CLOSED`, and the `CLOSED` event's `closeReason` is `OUTSIDE`.
 
 ### WebView remote debugging
 
@@ -875,7 +841,7 @@ Bottom sheet feature depends on Material Design Components. If the bottom sheet 
 
 ### MinifyEnabled error
 
-Check your ProGuard rules. The `consumer-rules.pro` file is automatically included, but you may need to add custom rules.
+The SDK's `consumer-rules.pro` is included automatically. If `init` fails in a release build with `Unable to create call adapter for interface`, you use an SDK version older than 2.0.0. Update it. Do not use `-keep class co.pisano.feedback.** { *; }` as a workaround, it turns off shrinking for the whole SDK.
 
 ## Pisano platform: where to get credentials
 

@@ -13,6 +13,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
 import com.google.android.material.button.MaterialButton
+import com.google.android.material.switchmaterial.SwitchMaterial
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
 import co.pisano.android.feedback.util.AppConfig
@@ -22,6 +23,9 @@ import co.pisano.android.feedback.util.FeedbackUtil
 import co.pisano.android.feedback.util.PisanoSdkBootstrapper
 import co.pisano.android.feedback.util.PisanoSdkState
 import co.pisano.android.feedback.util.SdkError
+import co.pisano.feedback.data.helper.PisanoEvent
+import co.pisano.feedback.data.helper.PisanoEventType
+import co.pisano.feedback.data.helper.PisanoSubscription
 import co.pisano.feedback.data.helper.ViewMode
 import co.pisano.feedback.data.model.PisanoCustomer
 import co.pisano.feedback.data.model.Title
@@ -33,6 +37,7 @@ class MainActivity : AppCompatActivity() {
     private var bgColors: IntArray = intArrayOf()
 
     private var selectedTitleColor: Int = android.graphics.Color.BLACK
+    private var subscription: PisanoSubscription? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -55,6 +60,8 @@ class MainActivity : AppCompatActivity() {
         val txtConfigMissing = findViewById<TextView>(R.id.txtConfigMissing)
         val txtActionStatus = findViewById<TextView>(R.id.txtActionStatus)
         val txtPreflight = findViewById<TextView>(R.id.txtPreflight)
+        val txtLastEvent = findViewById<TextView>(R.id.txtLastEvent)
+        val swAutomaticStoreReview = findViewById<SwitchMaterial>(R.id.swAutomaticStoreReview)
 
         val tilEmail = findViewById<TextInputLayout>(R.id.tilEmail)
 
@@ -83,6 +90,7 @@ class MainActivity : AppCompatActivity() {
         if (BuildConfig.DEBUG) {
             txtActionStatus.isVisible = true
             txtPreflight.isVisible = true
+            txtLastEvent.isVisible = true
         }
 
         PisanoSdkState.lastAction.observe(this) { action ->
@@ -94,6 +102,22 @@ class MainActivity : AppCompatActivity() {
             if (err == SdkError.ConfigMissing) {
                 txtConfigMissing.isVisible = true
                 btnGetFeedback.isEnabled = false
+            }
+        }
+
+        swAutomaticStoreReview.isChecked = PisanoSDK.automaticStoreReview
+        swAutomaticStoreReview.setOnCheckedChangeListener { _, checked ->
+            PisanoSDK.automaticStoreReview = checked
+            AppLogger.i("automaticStoreReview=$checked")
+        }
+
+        // Events of every survey shown by show(); cancelled in onDestroy.
+        subscription = PisanoSDK.subscribe { event ->
+            AppLogger.d("SDK event: $event")
+            txtLastEvent.text = getString(R.string.last_event, describe(event))
+            if (event.type == PisanoEventType.REDIRECTED_TO_STORE && !event.handledBySDK) {
+                // automaticStoreReview is off: run your own store review flow here.
+                AppLogger.i("Store review not handled by SDK, run own flow")
             }
         }
 
@@ -114,8 +138,38 @@ class MainActivity : AppCompatActivity() {
 
         btnClear.setOnClickListener {
             txtPreflight.text = ""
+            txtLastEvent.text = ""
             PisanoSdkState.setLastAction(null)
-            PisanoSDK.clearAction()
+            // clear() forgets the manager: show/track/healthCheck fail until init runs again.
+            PisanoSDK.clear()
+            txtPreflight.text = getString(R.string.reinit_running)
+            txtPreflight.isVisible = true
+            val task = PisanoSdkBootstrapper.reinitialize(this) { ok ->
+                txtPreflight.text = getString(if (ok) R.string.reinit_ok else R.string.reinit_failed)
+            }
+            if (task == null) txtPreflight.text = getString(R.string.reinit_failed)
+        }
+
+        // requestTimeout: connect and read timeout of the network requests, in seconds (default 30).
+        val etRequestTimeout = findViewById<TextInputEditText>(R.id.etRequestTimeout)
+        etRequestTimeout.setText(PisanoSDK.requestTimeout.toString())
+        findViewById<MaterialButton>(R.id.btnSetTimeout).setOnClickListener {
+            PisanoSDK.requestTimeout = etRequestTimeout.text?.toString()?.trim()?.toLongOrNull() ?: 0L
+            // A value below 1 resets it to the default.
+            etRequestTimeout.setText(PisanoSDK.requestTimeout.toString())
+            txtPreflight.text = getString(R.string.request_timeout_set, PisanoSDK.requestTimeout)
+            txtPreflight.isVisible = true
+        }
+
+        // track: send an event. The completion gets true when the server accepted it.
+        val etEventName = findViewById<TextInputEditText>(R.id.etEventName)
+        findViewById<MaterialButton>(R.id.btnTrack).setOnClickListener {
+            val event = etEventName.text?.toString()?.trim().orEmpty().ifEmpty { "sample_event" }
+            txtPreflight.text = getString(R.string.track_running, event)
+            txtPreflight.isVisible = true
+            PisanoSDK.track(event = event) { ok ->
+                txtPreflight.text = getString(if (ok) R.string.track_ok else R.string.track_failed, event)
+            }
         }
 
         btnHealthCheck.setOnClickListener {
@@ -201,9 +255,23 @@ class MainActivity : AppCompatActivity() {
                 dismissOnDrag = dismissOnDrag,
                 completion = { action ->
                     AppLogger.d("show completion: $action")
+                    PisanoSdkState.setLastAction(action)
                 },
             )
         }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        subscription?.cancel()
+        handler.removeCallbacksAndMessages(null)
+    }
+
+    private fun describe(event: PisanoEvent): String = when (event.type) {
+        PisanoEventType.OPENED -> "OPENED"
+        PisanoEventType.FEEDBACK_SUBMITTED -> "FEEDBACK_SUBMITTED (hasChat=${event.hasChat})"
+        PisanoEventType.REDIRECTED_TO_STORE -> "REDIRECTED_TO_STORE (handledBySDK=${event.handledBySDK})"
+        PisanoEventType.CLOSED -> "CLOSED (${event.closeReason})"
     }
 
     private fun parseDeepLink() {

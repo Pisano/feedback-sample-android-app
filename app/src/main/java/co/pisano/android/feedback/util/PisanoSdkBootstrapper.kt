@@ -2,8 +2,7 @@ package co.pisano.android.feedback.util
 
 import android.content.Context
 import co.pisano.android.feedback.BuildConfig
-import co.pisano.feedback.data.helper.ActionListener
-import co.pisano.feedback.data.helper.PisanoActions
+import co.pisano.feedback.data.helper.PisanoTask
 import co.pisano.feedback.managers.PisanoSDK
 import co.pisano.feedback.managers.PisanoSDKManager
 
@@ -27,28 +26,12 @@ object PisanoSdkBootstrapper {
 
             AppLogger.i("SDK init start")
 
-            val manager = PisanoSDKManager.Builder(context)
-                .setApplicationId(config.appId)
-                .setAccessKey(config.accessKey)
-                .setCode(config.code)
-                .setApiUrl(config.apiUrl)
-                .setFeedbackUrl(config.feedbackUrl)
-                .apply {
-                    if (config.eventUrl.isNotBlank()) {
-                        setEventUrl(config.eventUrl)
-                    }
-                }
-                .setDebug(BuildConfig.DEBUG)
-                .setCloseStatusCallback(object : ActionListener {
-                    override fun action(action: PisanoActions) {
-                        PisanoSdkState.setLastAction(action)
-                        AppLogger.d("SDK action: $action")
-                    }
-                })
-                .build()
+            val manager = buildManager(context, config)
 
             try {
-                PisanoSDK.init(manager)
+                PisanoSDK.init(manager) { succeeded ->
+                    AppLogger.d("SDK init result: $succeeded")
+                }
                 PisanoSdkState.setInitialized(true)
                 PisanoSdkState.setError(null)
                 initialized = true
@@ -61,6 +44,29 @@ object PisanoSdkBootstrapper {
             }
         }
     }
+
+    /**
+     * Runs init again. `PisanoSDK.clear()` forgets the manager, so call this after it,
+     * for example when the next user logs in. Returns null when the config is missing.
+     */
+    fun reinitialize(context: Context, completion: (Boolean) -> Unit): PisanoTask? {
+        val config = AppConfig.fromBuildConfig()
+        if (!config.isValid) return null
+        return PisanoSDK.init(buildManager(context, config), completion)
+    }
+
+    private fun buildManager(context: Context, config: AppConfig) =
+        PisanoSDKManager.Builder(context)
+            .setApplicationId(config.appId)
+            .setAccessKey(config.accessKey)
+            .setCode(config.code)
+            .setApiUrl(config.apiUrl)
+            .setFeedbackUrl(config.feedbackUrl)
+            .apply {
+                if (config.eventUrl.isNotBlank()) {
+                    setEventUrl(config.eventUrl)
+                }
+            }
+            .setDebug(BuildConfig.DEBUG)
+            .build()
 }
-
-
