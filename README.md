@@ -371,7 +371,7 @@ Every `show()` call ends with one `CloseStatus`. It says how the call ended. Wha
 | `CHANNEL_QUOTA_EXCEEDED` | Not shown: the quota is exceeded. |
 | `CHANNEL_PASSIVE` | Not shown: the survey is passive. |
 | `DISPLAY_RATE_LIMITED` | Not shown: skipped by `display_rate`. |
-| `NONE` | No survey was shown and no other value fits, for example the SDK is not initialized, a request failed or the survey page did not load (`closeReason` is `LOAD_FAILED`). |
+| `NONE` | No survey was shown and no other value fits, for example the SDK is not initialized, a request failed, the survey screen did not start in 5 seconds or the survey page did not load (`closeReason` is `LOAD_FAILED`). |
 
 ### `PisanoSDK.track()`
 
