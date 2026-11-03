@@ -49,6 +49,10 @@ Change the import to `co.pisano.feedback.data.helper.CloseStatus`. The values ke
 
 `NONE` means no survey was shown and no other value fits, for example the SDK is not initialized, a request failed or the survey page did not load. Every `show()` now ends with exactly one result. Before, the `completion` was not called in some of these cases.
 
+### 5. Rename the `track` parameter `languageCode`
+
+Only if you pass it by name: `PisanoSDK.track(event = "x", languageCode = "en")` becomes `PisanoSDK.track(event = "x", language = "en")`. It matches `show` and `healthCheck`. Calls by position need no change.
+
 ### Behavior changes to check
 
 These need no code change, but make sure your app does not rely on the old behavior.
@@ -56,6 +60,7 @@ These need no code change, but make sure your app does not rely on the old behav
 - **One survey at a time:** If a survey is open, another `show()` does not open a second one and ends with `NONE`.
 - **`healthCheck`:** It always reports on the main thread. When the SDK is not initialized it reports `false`. Before, it stayed silent.
 - **`track`:** It has an optional `completion`: `true` when the server accepted the event, `false` when it was not sent.
+- **`clear()`:** It forgets the `PisanoSDKManager`. Call `PisanoSDK.init` again after it, for example when the next user logs in. Until then `show()` ends with `NONE`, and `track()` and `healthCheck()` report `false`. Before, `show()` after `clear()` still worked with the previous user's code.
 
 ## What else is new
 
@@ -65,7 +70,7 @@ You do not need any of this to upgrade.
 
 - **`PisanoSDK.subscribe`:** Receive `OPENED`, `FEEDBACK_SUBMITTED`, `REDIRECTED_TO_STORE` and `CLOSED` for the surveys that `show()` displays. `CLOSED` has a `closeReason`, for example `CLOSE_BUTTON`, `BACK` or `DRAG`. Call `cancel()` on the returned subscription when you no longer need the events.
 - **`PisanoTask`:** `cancel()` stops the call and reports once: `false` for `init`, `healthCheck` and `track`, `NONE` for `show`. It has no effect after the call finished or after `show` put the survey on screen.
-- **`PisanoSDK.clear()`:** Closes the open survey, cancels the calls that are still running and clears the SDK's local data. Call it when a user logs out. The closed survey ends its `show()` with `NONE`. `clearAction()` is a deprecated alias.
+- **`PisanoSDK.clear()`:** Closes the open survey, cancels the calls that are still running and clears the SDK's local data and forgets the manager. Call it when a user logs out, then call `init` again for the next user. The closed survey ends its `show()` with `NONE`. `clearAction()` is a deprecated alias.
 - **`PisanoSDK.requestTimeout`:** Connect and read timeout of the network requests, in seconds. The default is `30`.
 - **`PisanoSDK.automaticStoreReview`:** The default is `true`. Set it to `false` to stop the SDK from asking for the Google Play review prompt and run your own flow on the `REDIRECTED_TO_STORE` event.
 
@@ -112,6 +117,8 @@ Reset the SDK when a user logs out. An open survey closes:
 
 ```kotlin
 PisanoSDK.clear()
+// Next user: set the SDK up again.
+PisanoSDK.init(manager)
 ```
 
 Change the timeout of the network requests, in seconds:

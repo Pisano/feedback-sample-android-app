@@ -381,7 +381,7 @@ Tracks a user activity by sending an event to the `eventUrl` that you set in `Pi
 - `event: String` - Event name (required)
 - `payload: HashMap<String, String>?` - Event data (optional)
 - `pisanoCustomer: PisanoCustomer?` - User information (optional)
-- `languageCode: String?` - Language code (optional)
+- `language: String?` - Language code (optional)
 - `completion: ((Boolean) -> Unit)?` - **Optional.** Called once on the main thread: `true` when the server accepted the event, `false` when it was not sent (the SDK is not initialized, there is no `eventUrl` or no network, the request failed) or the task was cancelled.
 
 **Returns:** a [`PisanoTask`](#pisanotask-cancel-a-running-call).
@@ -404,7 +404,7 @@ PisanoSDK.track(
     event = "purchase_completed",
     payload = payload,
     pisanoCustomer = customer,
-    languageCode = "en"
+    language = "en"
 )
 ```
 
@@ -433,12 +433,14 @@ task.cancel()
 
 `clearAction()` is a deprecated alias of `clear()`.
 
-Clears the SDK's local data (Shared Preferences), cancels the calls that are still running, as `PisanoTask.cancel()` does, and closes a survey that is open. This is useful when logging out a user to ensure fresh state for the next user. The closed survey ends its `show()` with `NONE`, even if the customer had submitted it, and the `CLOSED` event has the close reason `PisanoCloseReason.CLEAR`. A survey that did not open yet does not open. The SDK does not remember a closed survey as displayed, so `displayOnce` does not block it later.
+Clears the SDK's local data (Shared Preferences), cancels the calls that are still running, as `PisanoTask.cancel()` does, closes a survey that is open and forgets the `PisanoSDKManager`. This is useful when logging out a user to ensure fresh state for the next user. Call `PisanoSDK.init` again for the next user: until then `show()` ends with `NONE`, and `track()` and `healthCheck()` report `false`. The closed survey ends its `show()` with `NONE`, even if the customer had submitted it, and the `CLOSED` event has the close reason `PisanoCloseReason.CLEAR`. A survey that did not open yet does not open. The SDK does not remember a closed survey as displayed, so `displayOnce` does not block it later.
 
 **Example:**
 
 ```kotlin
 PisanoSDK.clear()
+// Next user: set the SDK up again.
+PisanoSDK.init(manager)
 ```
 
 ### `PisanoSDK.requestTimeout`
